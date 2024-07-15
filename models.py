@@ -8,8 +8,8 @@ from database.mariadb_session import Base
 class Term(Base):
     __tablename__ = 'term'
 
-    id = Column(INTEGER, nullable=False)
-    title = Column(String(125), primary_key=True, nullable=False)
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    title = Column(String(125), nullable=False)
     content = Column(LONGTEXT, nullable=False)
     require = Column(TINYINT(1), nullable=False)
 
