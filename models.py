@@ -90,3 +90,9 @@ class Place(Base):
     lon = Column(DOUBLE, nullable=False)
     address = Column(String(200), nullable=False)
     place_type_id = Column(INTEGER(unsigned=True), ForeignKey('place_type.id'), nullable=False)
+
+class PlaceType(Base):
+    __tablename__ = 'place_type'
+
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(45), nullable=False)
