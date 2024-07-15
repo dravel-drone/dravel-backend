@@ -65,3 +65,9 @@ class Review(Base):
     flight_date = Column(DateTime, nullable=False)
     comment = Column(Text, nullable=True)
     photo_url = Column(Text, nullable=True)
+
+class UserReviewLike(Base):
+    __tablename__ = 'user_review_like'
+
+    user_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
+    review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), primary_key=True, nullable=False)
