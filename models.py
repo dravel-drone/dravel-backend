@@ -77,3 +77,16 @@ class UserReviewLike(Base):
 
     user_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
     review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), primary_key=True, nullable=False)
+
+class Place(Base):
+    __tablename__ = 'place'
+
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(120), nullable=False)
+    comment = Column(String(200), nullable=True)
+    photo_url = Column(Text, nullable=True)
+    type = Column(Integer, nullable=False)
+    lat = Column(DOUBLE, nullable=False)
+    lon = Column(DOUBLE, nullable=False)
+    address = Column(String(200), nullable=False)
+    place_type_id = Column(INTEGER(unsigned=True), ForeignKey('place_type.id'), nullable=False)
