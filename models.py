@@ -32,3 +32,17 @@ class User(Base):
     drone = Column(String(45), nullable=True)
     image = Column(TEXT, nullable=True)
     one_liner = Column(String(100), nullable=True)
+
+class Dronespot(Base):
+    __tablename__ ='dronespot'
+
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(120), nullable=False)
+    lat = Column(DOUBLE, nullable=False)
+    lon = Column(DOUBLE, nullable=False)
+    address = Column(String(200), nullable=False)
+    photo_url = Column(Text, nullable=True)
+    comment = Column(String(200), nullable=False)
+    permit_flight = Column(TINYINT(1), nullable=False)
+    permit_camera = Column(TINYINT(1), nullable=False)
+
