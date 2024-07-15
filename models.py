@@ -52,6 +52,12 @@ class Dronespot(Base):
     permit_flight = Column(TINYINT(1), nullable=False)
     permit_camera = Column(TINYINT(1), nullable=False)
 
+class UserDronespotLike(Base):
+    __tablename__ = 'user_dronespot_like'
+
+    user_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+
 class Review(Base):
     __tablename__ = 'review'
 
