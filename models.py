@@ -33,6 +33,12 @@ class User(Base):
     image = Column(TEXT, nullable=True)
     one_liner = Column(String(100), nullable=True)
 
+class Follow(Base):
+    __tablename__ = 'follow'
+
+    follower_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True ,nullable=False)
+    following_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=False)
+
 class Dronespot(Base):
     __tablename__ ='dronespot'
 
