@@ -97,6 +97,15 @@ class PlaceType(Base):
     id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
     name = Column(String(45), nullable=False)
 
+class Course(Base):
+    __tablename__ = 'course'
+
+    id = Column(Integer(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    distance = Column(Integer, nullable=False)
+    duration = Column(Integer, nullable=False)
+
 class CourseVisit(Base):
     __tablename__ = 'course_visit'
 
