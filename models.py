@@ -96,3 +96,10 @@ class PlaceType(Base):
 
     id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
     name = Column(String(45), nullable=False)
+
+class CourseVisit(Base):
+    __tablename__ = 'course_visit'
+
+    course_id = Column(Integer(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
+    dronespot_id = Column(Integer(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=True)
+    place_id = Column(Integer(unsigned=True), ForeignKey('place.id'), primary_key=True, nullable=True)
