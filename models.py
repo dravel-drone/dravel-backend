@@ -16,8 +16,8 @@ class Term(Base):
 class UserTermAgree(Base):
     __tablename__ = 'user_term_agree'
 
-    term_id = Column(INTEGER(unsigned=True), ForeignKey('term.id'), nullable=False)
-    user_id = Column(String(128), ForeignKey('user.uid'), nullable=False)
+    term_id = Column(INTEGER(unsigned=True), ForeignKey('term.id'), primary_key=True, nullable=False)
+    user_id = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=False)
     created_at = Column(DATETIME, nullable=False)
 
 class User(Base):
