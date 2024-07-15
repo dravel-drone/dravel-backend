@@ -85,7 +85,7 @@ class Place(Base):
     name = Column(String(120), nullable=False)
     comment = Column(String(200), nullable=True)
     photo_url = Column(Text, nullable=True)
-    type = Column(Integer, nullable=False)
+    type = Column(INTEGER, nullable=False)
     lat = Column(DOUBLE, nullable=False)
     lon = Column(DOUBLE, nullable=False)
     address = Column(String(200), nullable=False)
@@ -100,15 +100,15 @@ class PlaceType(Base):
 class Course(Base):
     __tablename__ = 'course'
 
-    id = Column(Integer(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
     name = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
-    distance = Column(Integer, nullable=False)
-    duration = Column(Integer, nullable=False)
+    distance = Column(INTEGER, nullable=False)
+    duration = Column(INTEGER, nullable=False)
 
 class CourseVisit(Base):
     __tablename__ = 'course_visit'
 
-    course_id = Column(Integer(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
-    dronespot_id = Column(Integer(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=True)
-    place_id = Column(Integer(unsigned=True), ForeignKey('place.id'), primary_key=True, nullable=True)
+    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=True)
+    place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), primary_key=True, nullable=True)
