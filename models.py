@@ -5,6 +5,12 @@ from datetime import datetime
 from database.mariadb_session import Base
 
 # DB model 추가
+class Term(Base):
+    __tablename__ = 'term'
+    id = Column(INTEGER, nullable=False)
+    title = Column(String(125), primary_key=True, nullable=False)
+    content = Column(LONGTEXT, nullable=False)
+    require = Column(TINYINT(1), nullable=False)
 
 class User(Base):
     __tablename__ = 'user'
