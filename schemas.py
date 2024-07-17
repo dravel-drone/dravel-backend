@@ -115,3 +115,21 @@ class UserReviewLikeCreate(UserReviewLikeBase):
 class UserReviewLike(UserReviewLikeBase):
     class Config:
         orm_mode = True
+
+
+# Place pydantic 스키마
+class PlaceBase(BaseModel):
+    name: str
+    comment: Optional[str]
+    photo_url: Optional[str]
+    type: int
+    lat: float
+    lon: float
+    address: str
+    place_type_id: int
+class PlaceCreate(PlaceBase):
+    pass
+class Place(PlaceBase):
+    id: int
+    class Config:
+        orm_mode = True
