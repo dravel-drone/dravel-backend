@@ -15,3 +15,14 @@ class Term(TermBase):
     class Config:
         orm_mode = True
 
+# UserTermAgree pydantic 스키마
+class UserTermAgreeBase(BaseModel):
+    term_id: int
+    user_uid: str
+    created_at: datetime
+class UserTermAgreeCreate(UserTermAgreeBase):
+    pass
+class UserTermAgree(UserTermAgreeBase):
+    term: Term
+    class Config:
+        orm_mode = True
