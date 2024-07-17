@@ -144,3 +144,17 @@ class PlaceType(PlaceTypeBase):
     id: int
     class Config:
         orm_mode = True
+
+
+# Course pydantic 스키마
+class CourseBase(BaseModel):
+    name: str
+    content: str
+    distance: int
+    duration: int
+class CourseCreate(CourseBase):
+    pass
+class Course(CourseBase):
+    id: int
+    class Config:
+        orm_mode = True
