@@ -86,3 +86,22 @@ class UserDronespotLike(UserDronespotLikeBase):
     class Config:
         orm_mode = True
 
+
+# Review pydantic 스키마
+class ReviewBase(BaseModel):
+    writer_uid: str
+    dronespot_id: int
+    drone_type: str
+    permit_flight: int
+    permit_camera: int
+    drone: str
+    flight_date: datetime
+    comment: Optional[str]
+    photo_url: Optional[str]
+class ReviewCreate(ReviewBase):
+    pass
+class Review(ReviewBase):
+    id: int
+    class Config:
+        orm_mode = True
+
