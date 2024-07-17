@@ -26,3 +26,20 @@ class UserTermAgree(UserTermAgreeBase):
     term: Term
     class Config:
         orm_mode = True
+
+# User pydantic 스키마
+class UserBase(BaseModel):
+    name: str
+    id: str
+    email: str
+    is_admin: int
+    age: Optional[int]
+    drone: Optional[str]
+    image: Optional[str]
+    one_liner: Optional[str]
+class UserCreate(UserBase):
+    pass
+class User(UserBase):
+    uid: str
+    class Config:
+        orm_mode = True
