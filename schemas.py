@@ -56,3 +56,22 @@ class FollowCreate(FollowBase):
 class Follow(FollowBase):
     class Config:
         orm_mode = True
+
+
+# Dronespot pydantic 스키마
+class DronespotBase(BaseModel):
+    name: str
+    lat: float
+    lon: float
+    address: str
+    photo_url: Optional[str]
+    comment: str
+    permit_flight: int
+    permit_camera: int
+class DronespotCreate(DronespotBase):
+    pass
+class Dronespot(DronespotBase):
+    id: int
+    class Config:
+        orm_mode = True
+
