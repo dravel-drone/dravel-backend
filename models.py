@@ -47,7 +47,7 @@ class User(Base):
     user_review_likes = relationship('UserReviewLike', back_populates='user')
 
 class Follow(Base):
-    __tablename__ = 'follow'
+    __tablename__ = 'following_follower'
 
     follower_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True ,nullable=False)
     following_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=False)
