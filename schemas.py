@@ -158,3 +158,15 @@ class Course(CourseBase):
     id: int
     class Config:
         orm_mode = True
+
+
+# CourseVisit pydantic 스키마
+class CourseVisitBase(BaseModel):
+    course_id: int
+    dronespot_id: Optional[int]
+    place_id: Optional[int]
+class CourseVisitCreate(CourseVisitBase):
+    pass
+class CourseVisit(CourseVisitBase):
+    class Config:
+        orm_mode = True
