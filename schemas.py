@@ -133,3 +133,14 @@ class Place(PlaceBase):
     id: int
     class Config:
         orm_mode = True
+
+
+# PlaceType pydantic 스키마
+class PlaceTypeBase(BaseModel):
+    name: str
+class PlaceTypeCreate(PlaceTypeBase):
+    pass
+class PlaceType(PlaceTypeBase):
+    id: int
+    class Config:
+        orm_mode = True
