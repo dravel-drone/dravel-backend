@@ -75,3 +75,14 @@ class Dronespot(DronespotBase):
     class Config:
         orm_mode = True
 
+
+# UserDronespotLike pydantic 스키마
+class UserDronespotLikeBase(BaseModel):
+    user_uid: str
+    dronespot_id: int
+class UserDronespotLikeCreate(UserDronespotLikeBase):
+    pass
+class UserDronespotLike(UserDronespotLikeBase):
+    class Config:
+        orm_mode = True
+
