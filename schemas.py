@@ -15,6 +15,7 @@ class Term(TermBase):
     class Config:
         orm_mode = True
 
+
 # UserTermAgree pydantic 스키마
 class UserTermAgreeBase(BaseModel):
     term_id: int
@@ -26,6 +27,7 @@ class UserTermAgree(UserTermAgreeBase):
     term: Term
     class Config:
         orm_mode = True
+
 
 # User pydantic 스키마
 class UserBase(BaseModel):
@@ -41,5 +43,16 @@ class UserCreate(UserBase):
     pass
 class User(UserBase):
     uid: str
+    class Config:
+        orm_mode = True
+
+
+# Follow pydantic 스키마
+class FollowBase(BaseModel):
+    follower_uid: str
+    following_uid: str
+class FollowCreate(FollowBase):
+    pass
+class Follow(FollowBase):
     class Config:
         orm_mode = True
