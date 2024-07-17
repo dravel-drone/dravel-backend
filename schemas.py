@@ -105,3 +105,13 @@ class Review(ReviewBase):
     class Config:
         orm_mode = True
 
+
+# UserReviewLike pydantic 스키마
+class UserReviewLikeBase(BaseModel):
+    user_uid: str
+    review_id: int
+class UserReviewLikeCreate(UserReviewLikeBase):
+    pass
+class UserReviewLike(UserReviewLikeBase):
+    class Config:
+        orm_mode = True
