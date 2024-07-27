@@ -3,6 +3,8 @@ from typing import Optional
 import jwt
 from core.config import settings
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None)-> tuple[str, datetime]:
     to_encode = data.copy()
     if expires_delta:
@@ -57,3 +59,4 @@ def decode_refresh_token(token: str) -> Optional[dict]:
             detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
+
