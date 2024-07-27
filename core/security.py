@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Dict, Any, Optional
 import jwt
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
@@ -13,7 +13,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password + settings.PASSWORD_SALT)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None)-> tuple[str, datetime]:
+def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None)-> tuple[str, datetime]:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -23,7 +23,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None)->
     encoded_jwt = jwt.encode(to_encode, settings.ACCESS_SECRET_KEY, algorithm=settings.ACCESS_TOKEN_ENCODE_ALGORITHM)
     return encoded_jwt, expire
 
-def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> tuple[str, datetime]:
+def create_refresh_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> tuple[str, datetime]:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -34,7 +34,7 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     encoded_jwt = jwt.encode(to_encode, settings.REFRESH_SECRET_KEY, algorithm=settings.REFRESH_TOKEN_ENCODE_ALGORITHM)
     return encoded_jwt, expire
 
-def decode_access_token(token: str) -> Optional[dict]:
+def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     try:
         payload = jwt.decode(token, settings.ACCESS_SECRET_KEY, algorithms=[settings.ACCESS_TOKEN_ENCODE_ALGORITHM])
         return payload
@@ -51,7 +51,7 @@ def decode_access_token(token: str) -> Optional[dict]:
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
-def decode_refresh_token(token: str) -> Optional[dict]:
+def decode_refresh_token(token: str) -> Optional[Dict[str, Any]]:
     try:
         payload = jwt.decode(token, settings.REFRESH_SECRET_KEY, algorithms=[settings.REFRESH_TOKEN_ENCODE_ALGORITHM])
         return payload
