@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     REFRESH_SECRET_KEY: str = os.getenv('REFRESH_SECRET_KEY')
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 14
 
+    PASSWORD_SALT: str = os.getenv('PASSWORD_SALT')
 
     class Config:
         case_sensitive = True
