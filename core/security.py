@@ -40,3 +40,20 @@ def decode_access_token(token: str) -> Optional[dict]:
             detail="Invalid access token",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
+
+def decode_refresh_token(token: str) -> Optional[dict]:
+    try:
+        payload = jwt.decode(token, settings.REFRESH_SECRET_KEY, algorithms=[settings.REFRESH_TOKEN_ENCODE_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
