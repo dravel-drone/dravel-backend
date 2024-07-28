@@ -13,3 +13,15 @@ def get_token_from_header(request: Request) -> Optional[str]:
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header[len("Bearer "):]
     return None
+
+
+def get_access_key_from_token(token: str) -> str:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        access_key = payload.get("access")
+        if access_key is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="'access'정보가 없음")
+        return access_key
+    except JWTError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}")
+
