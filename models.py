@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.dialects.mysql import INTEGER, LONGTEXT, DATE, DATETIME, TINYINT, TEXT
+from sqlalchemy import Column, String, Integer, String, DateTime, Boolean, ForeignKey, Text
+from sqlalchemy.dialects.mysql import INTEGER, LONGTEXT, DATE, DATETIME, TINYINT, TEXT, DOUBLE
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database.mariadb_session import Base
