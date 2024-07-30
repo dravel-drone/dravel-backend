@@ -46,6 +46,13 @@ class User(Base):
     reviews = relationship('Review', back_populates='user')
     user_review_likes = relationship('UserReviewLike', back_populates='user')
 
+class Refresh(Base):
+    __tablename__ = 'refresh'
+
+    uid = Column(String(128), primary_key=True, nullable=True)
+    token = Column(TEXT, nullable=True)
+    expired_date = Column(DATETIME, default=datetime.utcnow(),nullable=True)
+
 class Follow(Base):
     __tablename__ = 'following_follower'
 
