@@ -88,7 +88,7 @@ class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
-    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=False)
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
 
     user = relationship('User', back_populates='user_dronespot_likes')
     dronespot = relationship('Dronespot', back_populates='user_dronespot_likes')
@@ -115,7 +115,7 @@ class UserReviewLike(Base):
     __tablename__ = 'user_review_like'
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
-    review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), nullable=False)
+    review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), primary_key=True, nullable=False)
 
     user = relationship('User', back_populates='user_review_likes')
     review = relationship('Review', back_populates='user_review_likes')
@@ -159,7 +159,7 @@ class Course(Base):
 class CourseVisit(Base):
     __tablename__ = 'course_visit'
 
-    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), nullable=False)
+    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
     dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=True)
     place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), nullable=True)
 

@@ -13,7 +13,7 @@ class TermCreate(TermBase):
 class Term(TermBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # UserTermAgree pydantic 스키마
@@ -26,7 +26,7 @@ class UserTermAgreeCreate(UserTermAgreeBase):
 class UserTermAgree(UserTermAgreeBase):
     term: Term
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # User pydantic 스키마
@@ -44,7 +44,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     uid: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Follow pydantic 스키마
@@ -55,7 +55,7 @@ class FollowCreate(FollowBase):
     pass
 class Follow(FollowBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Dronespot pydantic 스키마
@@ -73,7 +73,7 @@ class DronespotCreate(DronespotBase):
 class Dronespot(DronespotBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # UserDronespotLike pydantic 스키마
@@ -84,7 +84,7 @@ class UserDronespotLikeCreate(UserDronespotLikeBase):
     pass
 class UserDronespotLike(UserDronespotLikeBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Review pydantic 스키마
@@ -103,7 +103,7 @@ class ReviewCreate(ReviewBase):
 class Review(ReviewBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # UserReviewLike pydantic 스키마
@@ -114,7 +114,7 @@ class UserReviewLikeCreate(UserReviewLikeBase):
     pass
 class UserReviewLike(UserReviewLikeBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Place pydantic 스키마
@@ -132,7 +132,7 @@ class PlaceCreate(PlaceBase):
 class Place(PlaceBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # PlaceType pydantic 스키마
@@ -143,7 +143,7 @@ class PlaceTypeCreate(PlaceTypeBase):
 class PlaceType(PlaceTypeBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Course pydantic 스키마
@@ -157,7 +157,7 @@ class CourseCreate(CourseBase):
 class Course(CourseBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # CourseVisit pydantic 스키마
@@ -169,4 +169,4 @@ class CourseVisitCreate(CourseVisitBase):
     pass
 class CourseVisit(CourseVisitBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
