@@ -49,8 +49,8 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({
         "exp": expire,
-        "sub": data.get("uid"),
-        "class": data.get("is_admin")
+        "sub": data["sub"],
+        "level": data["level"]
     })
     encoded_jwt = jwt.encode(to_encode, settings.ACCESS_SECRET_KEY, algorithm=settings.ACCESS_TOKEN_ENCODE_ALGORITHM)
     return encoded_jwt, expire
@@ -63,8 +63,8 @@ def create_refresh_token(data: Dict[str, Any], expires_delta: Optional[timedelta
         expire = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
     to_encode.update({
         "exp": expire,
-        "sub": data.get("uid"),
-        "class": data.get("is_admin")
+        "sub": data["sub"],
+        "level": data["level"]
     })
     encoded_jwt = jwt.encode(to_encode, settings.REFRESH_SECRET_KEY, algorithm=settings.REFRESH_TOKEN_ENCODE_ALGORITHM)
     return encoded_jwt, expire
