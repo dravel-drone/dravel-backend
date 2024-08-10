@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -30,3 +30,23 @@ def create_term(
     db.refresh(db_term)
 
     return db_term
+
+@router.get("/term", response_model=List[Term], status_code=200)
+def get_all_terms(db: Session = Depends(get_db)):
+    terms = db.query(TermModel).all()
+    if not terms:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The requested resource was not found."
+        )
+    return terms
+
+@router.get("/term/{term_id}", response_model=Term, status_code=200)
+def get_term_by_id(term_id: int, db: Session = Depends(get_db)):
+    term = db.query(TermModel).filter(TermModel.id == term_id).first()
+    if not term:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The requested resource was not found."
+        )
+    return term
