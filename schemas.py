@@ -48,6 +48,14 @@ class User(UserBase):
         from_attributes = True
 
 
+# User login 스키마
+class Login(BaseModel):
+    id: str
+    password: str
+
+    class Config:
+        from_attributes = True
+
 # Follow pydantic 스키마
 class FollowBase(BaseModel):
     follower_uid: str
