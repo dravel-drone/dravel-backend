@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import Column, String, Integer, String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.dialects.mysql import INTEGER, LONGTEXT, DATE, DATETIME, TINYINT, TEXT, DOUBLE
 from sqlalchemy.orm import relationship
@@ -29,7 +31,7 @@ class UserTermAgree(Base):
 class User(Base):
     __tablename__ = 'user'
 
-    uid = Column(String(128), primary_key=True, nullable=False)
+    uid = Column(String(128), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
     name = Column(String(45), nullable=False)
     id = Column(String(20), nullable=False)
     email = Column(String(255), nullable=False)
