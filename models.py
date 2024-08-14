@@ -35,7 +35,7 @@ class User(Base):
     name = Column(String(45), nullable=False)
     id = Column(String(20), nullable=False)
     email = Column(String(255), nullable=False)
-    is_admin = Column(TINYINT(1), nullable=False)
+    is_admin = Column(TINYINT(1), default=0, nullable=False)
     age = Column(INTEGER(unsigned=True), nullable=True)
     drone = Column(String(45), nullable=True)
     image = Column(TEXT, nullable=True)
