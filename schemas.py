@@ -35,7 +35,6 @@ class UserBase(BaseModel):
     id: str
     email: str
     is_admin: int
-    password: str
     age: Optional[int]
     drone: Optional[str]
     image: Optional[str]
