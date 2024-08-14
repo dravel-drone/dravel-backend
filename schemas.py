@@ -47,6 +47,19 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+# 회원가입 스키마
+class Register(BaseModel):
+    name: str
+    id: str
+    email: str
+    password: str
+    age: Optional[int]
+    drone: Optional[str]
+    image: Optional[str]
+    one_liner: Optional[str]
+
+    class Config:
+        from_attributes = True
 
 # User login 스키마
 class Login(BaseModel):
