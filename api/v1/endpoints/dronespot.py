@@ -1,0 +1,90 @@
+import os
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from sqlalchemy.orm import Session
+from starlette.staticfiles import StaticFiles
+
+from models import Dronespot as DronespotModel
+from schemas import Dronespot, Permit, Area, Location
+from core.auth import verify_user_token
+from database.mariadb_session import get_db
+from starlette.responses import JSONResponse
+
+router = APIRouter()
+MEDIA_DIR = "media"
+router.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+
+@router.post("/dronespot", response_model=Dronespot, status_code=201)
+async def create_dronespot(
+        name: str = Form(...),
+        lat: float = Form(...),
+        lon: float = Form(...),
+        address: str = Form(...),
+        comment: str = Form(...),
+        permit_flight: int = Form(...),
+        permit_camera: int = Form(...),
+        file: Optional[UploadFile] = File(None),
+        db: Session = Depends(get_db),
+        user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    if not user_data.get("level"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    db_dronespot = DronespotModel(
+        name=name,
+        lat=lat,
+        lon=lon,
+        address=address,
+        comment=comment,
+        permit_flight=permit_flight,
+        permit_camera=permit_camera
+    )
+
+    db.add(db_dronespot)
+    db.commit()
+    db.refresh(db_dronespot)
+
+    photo_url = None
+    if file:
+        file_extension = os.path.splitext(file.filename)[1]
+        new_filename = f"dronespot_{db_dronespot.id}_{name}{file_extension}"
+        save_path = os.path.join(MEDIA_DIR, new_filename)
+        with open(save_path, "wb") as f:
+            f.write(await file.read())
+        photo_url = f"/media/{new_filename}"
+
+        db_dronespot.photo_url = photo_url
+        db.commit()
+        db.refresh(db_dronespot)
+
+    likes_count = 0
+    reviews_count = 0
+    is_like = 0
+    area_data = [
+        {"id": 1, "name": "Area 1"},
+        {"id": 2, "name": "Area 2"}
+    ]
+
+    return {
+        "id": db_dronespot.id,
+        "name": db_dronespot.name,
+        "is_like": is_like,
+        "location": {
+            "lat": db_dronespot.lat,
+            "lon": db_dronespot.lon,
+            "address": db_dronespot.address
+        },
+        "likes_count": likes_count,
+        "reviews_count": reviews_count,
+        "photo": db_dronespot.photo_url,
+        "comment": db_dronespot.comment,
+        "area": area_data,
+        "permit": {
+            "flight": db_dronespot.permit_flight,
+            "camera": db_dronespot.permit_camera
+        }
+    }
