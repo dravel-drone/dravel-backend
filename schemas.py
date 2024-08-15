@@ -80,19 +80,36 @@ class Follow(FollowBase):
 
 
 # Dronespot pydantic 스키마
-class DronespotBase(BaseModel):
-    name: str
+class Location(BaseModel):
     lat: float
     lon: float
     address: str
-    photo_url: Optional[str]
+
+class Permit(BaseModel):
+    flight: int
+    camera: int
+
+class Area(BaseModel):
+    id: int
+    name: str
+
+class DronespotBase(BaseModel):
+    name: str
+    location: Location
     comment: str
-    permit_flight: int
-    permit_camera: int
+    permit: Permit
+
 class DronespotCreate(DronespotBase):
     pass
+
 class Dronespot(DronespotBase):
     id: int
+    is_like: Optional[int] = 0
+    likes_count: Optional[int] = 0
+    reviews_count: Optional[int] = 0
+    photo: Optional[str]
+    area: List[Area]
+
     class Config:
         from_attributes = True
 
