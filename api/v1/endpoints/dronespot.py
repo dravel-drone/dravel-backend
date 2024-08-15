@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
-from models import Dronespot as DronespotModel
+from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel
 from schemas import Dronespot, Permit, Area, Location
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
@@ -145,14 +145,14 @@ async def update_dronespot(
     return Dronespot(
         id=db_dronespot.id,
         name=db_dronespot.name,
-        is_like=0,  # 초기값
+        is_like=0,
         location=Location(
             lat=db_dronespot.lat,
             lon=db_dronespot.lon,
             address=db_dronespot.address
         ),
-        likes_count=0,  # 초기값
-        reviews_count=0,  # 초기값
+        likes_count=0,
+        reviews_count=0,
         photo=db_dronespot.photo_url,
         comment=db_dronespot.comment,
         area=[Area(id=1, name="Area 1"), Area(id=2, name="Area 2")],  # 하드코딩된 값
@@ -161,3 +161,44 @@ async def update_dronespot(
             camera=db_dronespot.permit_camera
         )
     )
+
+@router.post("/like/{dronespot_id}", status_code=204)
+async def like_dronespot(
+        dronespot_id: int,
+        db: Session = Depends(get_db),
+        user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    user_uid = user_data.get("sub")
+
+    user = db.query(UserModel).filter(UserModel.uid == user_uid).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    dronespot = db.query(DronespotModel).filter(DronespotModel.id == dronespot_id).first()
+    if not dronespot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dronespot not found"
+        )
+
+    like_exists = db.query(UserDronespotLike).filter(
+        UserDronespotLike.user_uid == user_uid,
+        UserDronespotLike.drone_spot_id == dronespot_id
+    ).first()
+    if like_exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already liked this dronespot"
+        )
+
+    new_like = UserDronespotLike(
+        user_uid=user_uid,
+        drone_spot_id=dronespot_id
+    )
+    db.add(new_like)
+    db.commit()
+
+    return JSONResponse(content={"message": "Liked successfully"})
