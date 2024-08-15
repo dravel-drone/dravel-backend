@@ -78,6 +78,13 @@ class Follow(FollowBase):
     class Config:
         from_attributes = True
 
+# Refresh pydantic 스키마
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class AccessTokenResponse(BaseModel):
+    access_token: str
+    access_token_expire: int
 
 # Dronespot pydantic 스키마
 class Location(BaseModel):
