@@ -21,7 +21,7 @@ class UserTermAgree(Base):
     __tablename__ = 'user_term_agree'
 
     term_id = Column(INTEGER(unsigned=True), ForeignKey('term.id'), primary_key=True, nullable=False)
-    user_id = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=False)
+    user_uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=False)
     created_at = Column(DATETIME, default=datetime.utcnow, nullable=False)
 
     term = relationship('Term', back_populates='user_term_agree')
@@ -35,7 +35,7 @@ class User(Base):
     name = Column(String(45), nullable=False)
     id = Column(String(20), nullable=False)
     email = Column(String(255), nullable=False)
-    is_admin = Column(TINYINT(1), nullable=False)
+    is_admin = Column(TINYINT(1), default=0, nullable=False)
     age = Column(INTEGER(unsigned=True), nullable=True)
     drone = Column(String(45), nullable=True)
     image = Column(TEXT, nullable=True)

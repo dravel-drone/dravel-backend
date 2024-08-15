@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 from core.security import get_password_hash
 from database.mariadb_session import get_db
 from models import User as UserModel
-from schemas import UserCreate, User
+from schemas import User, Register
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=User, status_code=200)
-def create_term(
-        user: UserCreate,
+def register(
+        user: Register,
         db: Session = Depends(get_db)
 ):
     # 아이디 중복 검사

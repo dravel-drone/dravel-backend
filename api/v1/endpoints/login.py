@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post("/login", response_model=User, status_code=200)
-def create_term(
+def login(
         user: Login,
         db: Session = Depends(get_db)
 ):
