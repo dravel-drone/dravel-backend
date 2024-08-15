@@ -88,3 +88,76 @@ async def create_dronespot(
             "camera": db_dronespot.permit_camera
         }
     }
+
+@router.patch("/dronespot/{dronespot_id}", response_model=Dronespot)
+async def update_dronespot(
+        dronespot_id: int,
+        name: Optional[str] = Form(None),
+        lat: Optional[float] = Form(None),
+        lon: Optional[float] = Form(None),
+        address: Optional[str] = Form(None),
+        comment: Optional[str] = Form(None),
+        permit_flight: Optional[int] = Form(None),
+        permit_camera: Optional[int] = Form(None),
+        file: Optional[UploadFile] = File(None),
+        db: Session = Depends(get_db),
+        user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    if not user_data.get("level"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    db_dronespot = db.query(DronespotModel).filter(DronespotModel.id == dronespot_id).first()
+    if not db_dronespot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dronespot not found"
+        )
+
+    update_data = {
+        "name": name,
+        "lat": lat,
+        "lon": lon,
+        "address": address,
+        "comment": comment,
+        "permit_flight": permit_flight,
+        "permit_camera": permit_camera,
+    }
+
+    for key, value in update_data.items():
+        if value is not None:
+            setattr(db_dronespot, key, value)
+
+    if file:
+        file_extension = os.path.splitext(file.filename)[1]
+        new_filename = f"dronespot_{db_dronespot.id}_{db_dronespot.name}{file_extension}"
+        save_path = os.path.join(MEDIA_DIR, new_filename)
+        with open(save_path, "wb") as f:
+            f.write(await file.read())
+        db_dronespot.photo_url = f"/media/{new_filename}"
+
+    db.commit()
+    db.refresh(db_dronespot)
+
+    return Dronespot(
+        id=db_dronespot.id,
+        name=db_dronespot.name,
+        is_like=0,  # 초기값
+        location=Location(
+            lat=db_dronespot.lat,
+            lon=db_dronespot.lon,
+            address=db_dronespot.address
+        ),
+        likes_count=0,  # 초기값
+        reviews_count=0,  # 초기값
+        photo=db_dronespot.photo_url,
+        comment=db_dronespot.comment,
+        area=[Area(id=1, name="Area 1"), Area(id=2, name="Area 2")],  # 하드코딩된 값
+        permit=Permit(
+            flight=db_dronespot.permit_flight,
+            camera=db_dronespot.permit_camera
+        )
+    )
