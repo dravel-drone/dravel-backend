@@ -3,9 +3,10 @@ from typing import Dict, Any
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from starlette import status
-import models
 from core.security import decode_refresh_token, create_access_token, decode_access_token
 from database.mariadb_session import get_db
+from models import Refresh
+
 
 def verify_user_token(Authorization: str = Header(...)) -> Dict[str, Any]:
     try:
@@ -37,9 +38,9 @@ def update_access_token(refresh_token: str, db: Session = Depends(get_db)) -> Di
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token")
 
-        db_token = db.query(models.Refresh).filter(
-            models.Refresh.token == refresh_token,
-            models.Refresh.uid == str(uid)
+        db_token = db.query(Refresh).filter(
+            Refresh.token == refresh_token,
+            Refresh.uid == str(uid)
         ).first()
 
         if db_token is None or db_token.expired_date < datetime.utcnow():
