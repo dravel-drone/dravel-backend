@@ -202,3 +202,41 @@ async def like_dronespot(
     db.commit()
 
     return JSONResponse(content={"message": "Liked successfully"})
+
+@router.delete("/like/{dronespot_id}", status_code=204)
+async def unlike_dronespot(
+        dronespot_id: int,
+        db: Session = Depends(get_db),
+        user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    user_uid = user_data.get("sub")
+    print(user_uid)
+
+    user = db.query(UserModel).filter(UserModel.uid == user_uid).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    dronespot = db.query(DronespotModel).filter(DronespotModel.id == dronespot_id).first()
+    if not dronespot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dronespot not found"
+        )
+
+    like_exists = db.query(UserDronespotLike).filter(
+        UserDronespotLike.user_uid == user_uid,
+        UserDronespotLike.drone_spot_id == dronespot_id
+    ).first()
+    if not like_exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User has not liked this dronespot"
+        )
+
+    db.delete(like_exists)
+    db.commit()
+
+    return JSONResponse(content={"message": "UnLiked successfully"})
