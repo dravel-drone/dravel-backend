@@ -27,6 +27,12 @@ def login(
         if not pw_verify:
             raise HTTPException(status_code=400, detail="아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.")
 
+        # 같은 아이디 로그인 시 기존 refresh 토큰 삭제
+        existing_refresh_token = db.query(RefreshModel).filter(RefreshModel.uid == user_db.uid).first()
+        if existing_refresh_token:
+            db.delete(existing_refresh_token)
+            db.commit()
+
         # access토큰 생성
         access_token_data = {
             "sub": user_db.uid,
