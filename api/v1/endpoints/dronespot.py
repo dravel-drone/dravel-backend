@@ -254,3 +254,117 @@ async def unlike_dronespot(
     db.commit()
 
     return JSONResponse(content={"message": "UnLiked successfully"})
+
+@router.get("/dronespot/{dronespot_id}", response_model=Dronespot)
+async def get_dronespot(
+        dronespot_id: int,
+        db: Session = Depends(get_db),
+        user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    dronespot = db.query(DronespotModel).filter(DronespotModel.id == dronespot_id).first()
+    if not dronespot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dronespot not found"
+        )
+
+    likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
+        UserDronespotLike.drone_spot_id == dronespot_id).scalar()
+
+    is_like = (
+        db.query(UserDronespotLike)
+        .filter(
+            UserDronespotLike.user_uid == user_data["sub"],
+            UserDronespotLike.drone_spot_id == dronespot_id
+        )
+        .count() if user_data and user_data.get("sub") else 0
+    )
+
+    # test data
+    reviews = [
+        {
+            "id": 1,
+            "writer": {
+                "uid": "user_1",
+                "name": "John Doe"
+            },
+            "place_name": "Sample Place",
+            "permit": {
+                "flight": 1,
+                "camera": 1
+            },
+            "drone_type": "DJI Mavic Air",
+            "date": "2024-08-01",
+            "comment": "Great spot to fly!",
+            "photo": "/media/sample_review_photo.jpg",
+            "like_count": 5,
+            "is_like": 1
+        },
+    ]
+
+    courses = [
+        {
+            "id": 1,
+            "name": "Sample Course",
+            "content": "This is a great course.",
+            "places": [
+                {
+                    "id": 1,
+                    "name": "Sample Place 1",
+                    "photo": "/media/sample_place_photo_1.jpg"
+                },
+                {
+                    "id": 2,
+                    "name": "Sample Place 2",
+                    "photo": "/media/sample_place_photo_2.jpg"
+                }
+            ],
+            "distance": 5000,
+            "duration": 60
+        }
+    ]
+
+    accomodations = [
+        {
+            "id": 1,
+            "name": "Sample Hotel",
+            "comment": "Cozy place to stay.",
+            "photo": "/media/sample_accommodation_photo.jpg",
+            "location": {
+                "lat": 37.5665,
+                "lon": 126.978,
+                "address": "Seoul, South Korea"
+            }
+        }
+    ]
+
+    restaurants = [
+        {
+            "id": 1,
+            "name": "Sample Restaurant",
+            "comment": "Delicious food.",
+            "photo": "/media/sample_restaurant_photo.jpg",
+            "location": {
+                "lat": 37.5665,
+                "lon": 126.978,
+                "address": "Seoul, South Korea"
+            }
+        }
+    ]
+
+    return {
+        "id": dronespot.id,
+        "name": dronespot.name,
+        "is_like": is_like,
+        "location": {"lat": dronespot.lat, "lon": dronespot.lon, "address": dronespot.address},
+        "likes_count": likes_count,
+        "reviews_count": len(reviews),
+        "photo": dronespot.photo_url,
+        "comment": dronespot.comment,
+        "area": [{"id": 1, "name": "Area 1"}, {"id": 2, "name": "Area 2"}],
+        "permit": {"flight": dronespot.permit_flight, "camera": dronespot.permit_camera},
+        "reviews": reviews,
+        "courses": courses,
+        "places": {"accomodations": accomodations, "restaurants": restaurants}
+    }
