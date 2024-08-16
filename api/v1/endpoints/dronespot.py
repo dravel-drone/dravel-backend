@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
@@ -142,6 +143,10 @@ async def update_dronespot(
     db.commit()
     db.refresh(db_dronespot)
 
+    likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
+        UserDronespotLike.drone_spot_id == dronespot_id).scalar()
+    reviews_count = 0
+
     return Dronespot(
         id=db_dronespot.id,
         name=db_dronespot.name,
@@ -151,11 +156,11 @@ async def update_dronespot(
             lon=db_dronespot.lon,
             address=db_dronespot.address
         ),
-        likes_count=0,
-        reviews_count=0,
+        likes_count=likes_count,
+        reviews_count=reviews_count,
         photo=db_dronespot.photo_url,
         comment=db_dronespot.comment,
-        area=[Area(id=1, name="Area 1"), Area(id=2, name="Area 2")],  # 하드코딩된 값
+        area=[Area(id=1, name="Area 1"), Area(id=2, name="Area 2")],
         permit=Permit(
             flight=db_dronespot.permit_flight,
             camera=db_dronespot.permit_camera
