@@ -1,6 +1,6 @@
 import os
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from typing import Optional, Dict, Any, List
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
@@ -143,6 +143,15 @@ async def update_dronespot(
     db.commit()
     db.refresh(db_dronespot)
 
+    is_like = (
+        db.query(UserDronespotLike)
+        .filter(
+            UserDronespotLike.user_uid == user_data["sub"],
+            UserDronespotLike.drone_spot_id == dronespot_id
+        )
+        .count()
+    )
+
     likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
         UserDronespotLike.drone_spot_id == dronespot_id).scalar()
     reviews_count = 0
@@ -150,7 +159,7 @@ async def update_dronespot(
     return Dronespot(
         id=db_dronespot.id,
         name=db_dronespot.name,
-        is_like=0,
+        is_like=is_like,
         location=Location(
             lat=db_dronespot.lat,
             lon=db_dronespot.lon,
