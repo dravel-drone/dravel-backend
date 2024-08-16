@@ -255,6 +255,63 @@ async def unlike_dronespot(
 
     return JSONResponse(content={"message": "UnLiked successfully"})
 
+@router.get("/dronespot/popular", response_model=List[Dronespot])
+async def get_popular_dronespots(
+        page_num: int = Query(1, ge=1),
+        size: int = Query(10, ge=1),
+        db: Session = Depends(get_db),
+        user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    dronespots_query = db.query(
+        DronespotModel,
+        func.count(UserDronespotLike.user_uid).label('likes_count')
+    ).outerjoin(UserDronespotLike, DronespotModel.id == UserDronespotLike.drone_spot_id) \
+     .group_by(DronespotModel.id) \
+     .order_by(func.count(UserDronespotLike.user_uid).desc()) \
+     .offset((page_num - 1) * size) \
+     .limit(size)
+
+    dronespots = dronespots_query.all()
+
+    if not dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No popular dronespots found"
+        )
+
+    user_uid = user_data.get("sub") if user_data else None
+
+    response_data = [
+        {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
+                UserDronespotLike.user_uid == user_uid,
+                UserDronespotLike.drone_spot_id == dronespot.id
+            ).first() else 0,
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address
+            },
+            "likes_count": likes_count,
+            "reviews_count": 0,
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera
+            }
+        }
+        for dronespot, likes_count in dronespots
+    ]
+
+    return response_data
+
 @router.get("/dronespot/{dronespot_id}", response_model=Dronespot)
 async def get_dronespot(
         dronespot_id: int,
