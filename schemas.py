@@ -84,7 +84,7 @@ class RefreshTokenRequest(BaseModel):
 
 class AccessTokenResponse(BaseModel):
     access_token: str
-    access_token_expire: int
+    access_token_expire: datetime
 
 # Dronespot pydantic 스키마
 class Location(BaseModel):
