@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 from core.config import settings
 from core.security import verify_password, create_refresh_token, create_access_token
 from database.mariadb_session import get_db
-from models import User as UserModel
+from models import User as UserModel, Refresh as RefreshModel
 from schemas import User, Login
 
 router = APIRouter()
@@ -42,6 +42,9 @@ def login(
         }
         refresh_expires_delta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
         refresh_token, refresh_expire = create_refresh_token(refresh_token_data, refresh_expires_delta)
+        db_refresh = RefreshModel(uid=user_db.uid, token=refresh_token, expired_date=refresh_expire)
+        db.add(db_refresh)
+        db.commit()
         #print(refresh_token)
         # HTTP-only 쿠키 설정
         response = JSONResponse(content={
