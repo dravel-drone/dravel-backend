@@ -88,7 +88,7 @@ async def create_review(
     return JSONResponse(content=response_data, status_code=200)
 
 @router.patch("/review/{review_id}", response_model=Review, status_code=200)
-async def create_review(
+async def patch_review(
         review_id: int,
         comment: str = Form(...),
         drone_type: str = Form(...),
@@ -168,3 +168,68 @@ async def create_review(
     }
 
     return JSONResponse(content=response_data, status_code=200)
+
+
+@router.post("/like/{review_id}", status_code=200)
+async def like_review(
+        review_id: int,
+        db: Session = Depends(get_db)
+        # user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
+    user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
+    if not user_db:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 유저를 찾을 수 없습니다."
+        )
+
+    like_exists = db.query(UserReviewLikeModel).filter(
+        UserReviewLikeModel.user_uid == user_db.uid,
+        UserReviewLikeModel.review_id == review_id
+    ).first()
+    if like_exists:
+        raise HTTPException(
+            status_code=400,
+            detail="이미 해당 리뷰에 좋아요를 눌렀습니다."
+        )
+
+    new_like = UserReviewLikeModel(
+        user_uid=user_db.uid,
+        review_id=review_id
+    )
+    db.add(new_like)
+    db.commit()
+
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=200)
+
+
+@router.delete("/like", status_code=200)
+async def unlike_review(
+        review_id: int = Form(...),
+        db: Session = Depends(get_db)
+        # user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
+    user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
+    if not user_db:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 유저를 찾을 수 없습니다."
+        )
+
+    like_exists = db.query(UserReviewLikeModel).filter(
+        UserReviewLikeModel.user_uid == user_db.uid,
+        UserReviewLikeModel.review_id == review_id
+    ).first()
+    if not like_exists:
+        raise HTTPException(
+            status_code=400,
+            detail="좋아요를 누른 리뷰가 아닙니다."
+        )
+
+
+    db.delete(like_exists)
+    db.commit()
+
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
