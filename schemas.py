@@ -133,20 +133,26 @@ class UserDronespotLike(UserDronespotLikeBase):
 
 
 # Review pydantic 스키마
-class ReviewBase(BaseModel):
-    writer_uid: str
-    dronespot_id: int
-    drone_type: str
-    permit_flight: int
-    permit_camera: int
-    drone: str
-    flight_date: datetime
-    comment: Optional[str]
-    photo_url: Optional[str]
-class ReviewCreate(ReviewBase):
-    pass
-class Review(ReviewBase):
+class Writer(BaseModel):
+    uid: str
+    name: str
+
+class Permit(BaseModel):
+    flight: int
+    camera: int
+
+class Review(BaseModel):
     id: int
+    writer: Writer
+    place_name: str
+    permit: Permit
+    drone_type: str
+    date: str
+    comment: str
+    photo: str
+    like_count: int
+    is_like: int
+
     class Config:
         from_attributes = True
 
