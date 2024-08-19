@@ -90,7 +90,7 @@ class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
-    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    drone_spot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
 
     user = relationship('User', back_populates='user_dronespot_likes')
     dronespot = relationship('Dronespot', back_populates='user_dronespot_likes')
