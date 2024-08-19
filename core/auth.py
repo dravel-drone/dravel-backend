@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from starlette import status
@@ -8,7 +8,9 @@ from database.mariadb_session import get_db
 from models import Refresh
 
 
-def verify_user_token(Authorization: str = Header(...)) -> Dict[str, Any]:
+def verify_user_token(Authorization: Optional[str] = Header(None)) -> Optional[Dict[str, Any]]:
+    if Authorization is None:
+        return None
     try:
         token = Authorization.split(" ")[1]
         payload = decode_access_token(token)
