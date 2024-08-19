@@ -24,11 +24,11 @@ async def create_review(
         comment: str = Form(...),
         drone_type: str = Form(...),
         date: str = Form(...),
+        drone: str = Form(...),
         file: UploadFile = File(...),
         db: Session = Depends(get_db),
-        #user: Dict[str, Any] = Depends(verify_user_token)
+        user: Dict[str, Any] = Depends(verify_user_token)
 ):
-    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
     user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
     print(user_db)
     # 드론 스팟 확인
@@ -43,7 +43,7 @@ async def create_review(
         drone_type=drone_type,
         permit_flight=drone_spot.permit_flight,
         permit_camera=drone_spot.permit_camera,
-        drone="???",
+        drone=drone,
         flight_date=date,
         comment=comment
     )
@@ -93,11 +93,11 @@ async def patch_review(
         comment: str = Form(...),
         drone_type: str = Form(...),
         date: str = Form(...),
+        drone: str = Form(...),
         file: UploadFile = File(...),
         db: Session = Depends(get_db),
-        #user: Dict[str, Any] = Depends(verify_user_token)
+        user: Dict[str, Any] = Depends(verify_user_token)
 ):
-    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
     user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
 
     db_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
@@ -115,7 +115,7 @@ async def patch_review(
         "drone_type": drone_type,
         "permit_flight": db_review.permit_flight,
         "permit_camera": db_review.permit_camera,
-        "drone": "???",
+        "drone": drone,
         "flight_date": date,
         "comment": comment
     }
@@ -170,13 +170,12 @@ async def patch_review(
     return JSONResponse(content=response_data, status_code=200)
 
 
-@router.post("/like/{review_id}", status_code=200)
+@router.post("/likereview/{review_id}", status_code=204)
 async def like_review(
         review_id: int,
-        db: Session = Depends(get_db)
-        # user_data: Dict[str, Any] = Depends(verify_user_token)
+        db: Session = Depends(get_db),
+        user: Dict[str, Any] = Depends(verify_user_token)
 ):
-    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
     user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
     if not user_db:
         raise HTTPException(
@@ -201,16 +200,15 @@ async def like_review(
     db.add(new_like)
     db.commit()
 
-    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=200)
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=204)
 
 
-@router.delete("/like", status_code=200)
+@router.delete("/unlikereview/{review_id}", status_code=204)
 async def unlike_review(
-        review_id: int = Form(...),
-        db: Session = Depends(get_db)
-        # user_data: Dict[str, Any] = Depends(verify_user_token)
+        review_id: int,
+        db: Session = Depends(get_db),
+        user: Dict[str, Any] = Depends(verify_user_token)
 ):
-    user = {"sub": "0314a071-bc26-4243-8c52-f183de15d0f4"}
     user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
     if not user_db:
         raise HTTPException(
@@ -222,14 +220,14 @@ async def unlike_review(
         UserReviewLikeModel.user_uid == user_db.uid,
         UserReviewLikeModel.review_id == review_id
     ).first()
+
     if not like_exists:
         raise HTTPException(
             status_code=400,
             detail="좋아요를 누른 리뷰가 아닙니다."
         )
 
-
     db.delete(like_exists)
     db.commit()
 
-    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=204)
