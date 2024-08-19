@@ -258,7 +258,10 @@ def get_user_reviews(
     for review in reviews:
         # 로그인한 유저일 경우, 좋아요 여부 확인
         if user:
-            is_like = 1
+            is_like = db.query(UserReviewLikeModel).filter(
+                UserReviewLikeModel.review_id == review.id,
+                UserReviewLikeModel.user_uid == user['sub']
+            ).count()
         else:
             is_like = 0  # 로그인하지 않은 경우
 
