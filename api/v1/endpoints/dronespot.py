@@ -439,6 +439,73 @@ async def get_popular_dronespots_by_keyword(
 
     return response_data
 
+@router.get("/dronespot/area", response_model=List[Dronespot])
+async def get_dronespot_by_area(
+    lat: float,
+    lon: float,
+    area: float,
+    page_num: int = Query(1, ge=1),
+    size: int = Query(10, ge=1),
+    db: Session = Depends(get_db),
+    user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    lat_radians = radians(lat)
+    lon_radians = radians(lon)
+
+    distance_formula = (
+        6371 * func.acos(
+            func.cos(lat_radians) * func.cos(func.radians(DronespotModel.lat)) *
+            func.cos(func.radians(DronespotModel.lon) - lon_radians) +
+            func.sin(lat_radians) * func.sin(func.radians(DronespotModel.lat))
+        )
+    )
+
+    dronespots_query = db.query(DronespotModel).filter(
+        distance_formula <= area
+    ).order_by(distance_formula).offset((page_num - 1) * size).limit(size)
+
+    dronespots = dronespots_query.all()
+
+    user_uid = user_data.get("sub") if user_data else None
+
+    response_data = [
+        {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": (
+                db.query(UserDronespotLike)
+                .filter(
+                    UserDronespotLike.user_uid == user_uid,
+                    UserDronespotLike.drone_spot_id == dronespot.id
+                )
+                .count() if user_uid else 0
+            ),
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address,
+            },
+            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
+                UserDronespotLike.drone_spot_id == dronespot.id).scalar(),
+            "reviews_count": db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot.id).scalar(),
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera,
+            }
+        }
+        for dronespot in dronespots
+    ]
+
+    return response_data
+
 @router.get("/dronespot/{dronespot_id}", response_model=Dronespot)
 async def get_dronespot(
         dronespot_id: int,
