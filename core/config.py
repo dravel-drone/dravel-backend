@@ -7,6 +7,10 @@ load_dotenv()
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
+    MEDIA_DIR: str = os.path.join(os.path.dirname(__file__), "../media")
+    if not os.path.exists(MEDIA_DIR):
+        os.makedirs(MEDIA_DIR, exist_ok=True)
+
     MARIADB_HOST: str = os.getenv("MARIADB_HOST")
     MARIADB_PORT: str = os.getenv("MARIADB_PORT")
     MARIADB_USERNAME: str = os.getenv("MARIADB_USERNAME")

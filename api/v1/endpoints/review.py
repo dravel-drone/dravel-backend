@@ -1,6 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -170,7 +170,7 @@ async def patch_review(
     return JSONResponse(content=response_data, status_code=200)
 
 
-@router.post("/likereview/{review_id}", status_code=204)
+@router.post("/likereview/{review_id}", status_code=200)
 async def like_review(
         review_id: int,
         db: Session = Depends(get_db),
@@ -200,10 +200,10 @@ async def like_review(
     db.add(new_like)
     db.commit()
 
-    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=204)
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=200)
 
 
-@router.delete("/unlikereview/{review_id}", status_code=204)
+@router.delete("/unlikereview/{review_id}", status_code=200)
 async def unlike_review(
         review_id: int,
         db: Session = Depends(get_db),
@@ -230,4 +230,59 @@ async def unlike_review(
     db.delete(like_exists)
     db.commit()
 
-    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=204)
+    return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
+
+@router.get("/userReview/{user_id}", response_model=list[Review], status_code=200)
+def get_user_reviews(
+    user_id: str,
+    page_num: int = Query(1, alias="page_num"),
+    size: int = Query(10, alias="size"),
+    order: int = Query(0, alias="order"),  # 0: 최신순, 1: 좋아요순
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    db_review = db.query(ReviewModel).filter(ReviewModel.writer_uid == user_id)
+
+    if order == 1:
+        # 좋아요 순 정렬
+        db_review = db_review.outerjoin(UserReviewLikeModel).group_by(ReviewModel.id).order_by(func.count(UserReviewLikeModel.review_id).desc())
+    else:
+        # 최신순 정렬
+        db_review = db_review.order_by(ReviewModel.flight_date.desc())
+
+    # 페이징
+    reviews = db_review.offset((page_num - 1) * size).limit(size).all()
+
+    response = []
+    for review in reviews:
+        # 로그인한 유저일 경우, 좋아요 여부 확인
+        if user:
+            is_like = db.query(UserReviewLikeModel).filter(
+                UserReviewLikeModel.review_id == review.id,
+                UserReviewLikeModel.user_uid == user['sub']
+            ).count()
+        else:
+            is_like = 0  # 로그인하지 않은 경우
+
+        like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
+        response.append(Review(
+            id=review.id,
+            writer={
+                "uid": review.writer_uid,
+                "name": review.user.name
+            },
+            place_name=review.dronespot.name,
+            permit={
+                "flight": review.permit_flight,
+                "camera": review.permit_camera
+            },
+            drone_type=review.drone_type,
+            date=review.flight_date.isoformat(),
+            comment=review.comment if review.comment else "",
+            photo=review.photo_url if review.photo_url else "",
+            like_count=like_count,
+            is_like=is_like
+        ))
+
+    return response
