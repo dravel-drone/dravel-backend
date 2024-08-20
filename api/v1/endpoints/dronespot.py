@@ -1,11 +1,12 @@
 import os
+from math import radians
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
-from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel
+from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel, TrendDronespot, Review
 from schemas import Dronespot, Permit, Area, Location
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
@@ -308,6 +309,73 @@ async def get_popular_dronespots(
             }
         }
         for dronespot, likes_count in dronespots
+    ]
+
+    return response_data
+
+@router.get("/dronespot/keyword", response_model=List[Dronespot])
+async def search_dronespots_by_keyword(
+    keyword: str,
+    page_num: int = Query(1, ge=1),
+    size: int = Query(10, ge=1),
+    db: Session = Depends(get_db),
+    user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    starting_with_keyword = db.query(DronespotModel).filter(
+        DronespotModel.name.ilike(f"{keyword}%")
+    ).order_by(DronespotModel.name).all()
+
+    containing_keyword = db.query(DronespotModel).filter(
+        DronespotModel.name.ilike(f"%{keyword}%")
+    ).filter(
+        ~DronespotModel.id.in_([spot.id for spot in starting_with_keyword])
+    ).order_by(DronespotModel.name).all()
+
+    for dronespot in starting_with_keyword + containing_keyword:
+        trend_spot = db.query(TrendDronespot).filter(TrendDronespot.dronespot_id == dronespot.id).first()
+        if trend_spot:
+            trend_spot.count += 1
+        else:
+            trend_spot = TrendDronespot(dronespot_id=dronespot.id, count=1)
+            db.add(trend_spot)
+        db.add(dronespot)
+    db.commit()
+
+    dronespots = (starting_with_keyword + containing_keyword)[(page_num - 1) * size : page_num * size]
+
+    user_uid = user_data.get("sub") if user_data else None
+    response_data = [
+        {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
+                UserDronespotLike.user_uid == user_uid,
+                UserDronespotLike.drone_spot_id == dronespot.id
+            ).first() else 0,
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address
+            },
+            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
+                UserDronespotLike.drone_spot_id == dronespot.id
+            ).scalar(),
+            "reviews_count": db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot.id
+            ).scalar(),
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera
+            }
+        }
+        for dronespot in dronespots
     ]
 
     return response_data
