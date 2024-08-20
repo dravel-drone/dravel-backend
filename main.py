@@ -4,9 +4,17 @@ from core.config import settings
 from database.mariadb_session import *
 from schemas import *
 from core.security import *
+from fastapi.staticfiles import StaticFiles
+
+from core.config import settings
 
 app = FastAPI()
+
+app.mount("/media", StaticFiles(directory=settings.MEDIA_DIR), name="media")
+
 app.include_router(api_router, prefix="/api/v1")
+
+
 
 # app.include_router(api_router, prefix=settings.API_V1_STR)
 

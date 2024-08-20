@@ -11,9 +11,9 @@ from core.auth import verify_user_token
 from database.mariadb_session import get_db
 from starlette.responses import JSONResponse
 
+from core.config import settings
+
 router = APIRouter()
-MEDIA_DIR = "media"
-router.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 @router.post("/dronespot", response_model=Dronespot, status_code=201)
 async def create_dronespot(
@@ -53,7 +53,7 @@ async def create_dronespot(
     if file:
         file_extension = os.path.splitext(file.filename)[1]
         new_filename = f"dronespot_{db_dronespot.id}_{name}{file_extension}"
-        save_path = os.path.join(MEDIA_DIR, new_filename)
+        save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
         photo_url = f"/media/{new_filename}"
@@ -135,7 +135,7 @@ async def update_dronespot(
     if file:
         file_extension = os.path.splitext(file.filename)[1]
         new_filename = f"dronespot_{db_dronespot.id}_{db_dronespot.name}{file_extension}"
-        save_path = os.path.join(MEDIA_DIR, new_filename)
+        save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
         db_dronespot.photo_url = f"/media/{new_filename}"
