@@ -289,7 +289,7 @@ def get_user_reviews(
 
 
 @router.get("/spotReview/{drone_spot_id}", response_model=list[Review], status_code=200)
-def get_user_reviews(
+def get_spot_reviews(
     drone_spot_id: int,
     page_num: int = Query(1, alias="page_num"),
     size: int = Query(10, alias="size"),
