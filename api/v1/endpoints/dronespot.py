@@ -1,5 +1,6 @@
 import os
 from math import radians
+import random
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy import func
@@ -532,6 +533,60 @@ async def get_dronespot_by_area(
 
     return response_data
 
+@router.get("/dronespot/recommend", response_model=List[Dronespot])
+async def recommend_dronespots(
+    page_num: int = Query(1, ge=1),
+    size: int = Query(10, ge=1),
+    db: Session = Depends(get_db),
+    user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    dronespots = db.query(DronespotModel).all()
+
+    if not dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No dronespots found"
+        )
+    random.shuffle(dronespots)
+
+    start_index = (page_num - 1) * size
+    end_index = start_index + size
+    recommend_dronespots = dronespots[start_index:end_index]
+
+    user_uid = user_data.get("sub") if user_data else None
+
+    response_data = [
+        {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
+                UserDronespotLike.user_uid == user_uid,
+                UserDronespotLike.drone_spot_id == dronespot.id
+            ).first() else 0,
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address
+            },
+            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
+                UserDronespotLike.drone_spot_id == dronespot.id).scalar(),
+            "reviews_count": db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot.id).scalar(),
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera
+            }
+        }
+        for dronespot in recommend_dronespots
+    ]
+
+    return response_data
 @router.get("/dronespot/{dronespot_id}", response_model=Dronespot)
 async def get_dronespot(
         dronespot_id: int,
