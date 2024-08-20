@@ -177,6 +177,32 @@ async def update_dronespot(
         )
     )
 
+
+@router.delete("/dronespot/{drone_spot_id}", status_code=204)
+async def delete_dronespot(
+        drone_spot_id: int,
+        db: Session = Depends(get_db),
+        user_data: Dict[str, Any] = Depends(verify_user_token)
+):
+    if not user_data.get("level"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    db_dronespot = db.query(DronespotModel).filter(DronespotModel.id == drone_spot_id).first()
+    if not db_dronespot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dronespot not found"
+        )
+
+    db.delete(db_dronespot)
+    db.commit()
+
+    return JSONResponse(content={"message": "Delete successfully"})
+
 @router.post("/likedronespot/{dronespot_id}", status_code=204)
 async def like_dronespot(
         dronespot_id: int,
