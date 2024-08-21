@@ -204,7 +204,7 @@ async def delete_dronespot(
 
     return JSONResponse(content={"message": "Delete successfully"})
 
-@router.post("/likedronespot/{dronespot_id}", status_code=204)
+@router.post("/like/dronespot/{dronespot_id}", status_code=204)
 async def like_dronespot(
         dronespot_id: int,
         db: Session = Depends(get_db),
@@ -245,7 +245,7 @@ async def like_dronespot(
 
     return JSONResponse(content={"message": "Liked successfully"})
 
-@router.delete("/likedronespot/{dronespot_id}", status_code=204)
+@router.delete("/like/dronespot/{dronespot_id}", status_code=204)
 async def unlike_dronespot(
         dronespot_id: int,
         db: Session = Depends(get_db),
