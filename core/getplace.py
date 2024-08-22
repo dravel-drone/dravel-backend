@@ -1,10 +1,17 @@
 import httpx
 import asyncio
 import xmltodict
+from fastapi import Depends
 from pydantic import BaseModel
 from typing import Dict, Any
+from models import Dronespot as DronespotModel, Place as PlaceModel
+
+from sqlalchemy.orm import Session
+
 from core.config import settings
 import json
+
+from database.mariadb_session import get_db, SessionLocal
 
 
 class APIRequestParams(BaseModel):
@@ -55,7 +62,7 @@ async def fetch_page(params: APIRequestParams) -> Dict[str, Any]:
         return {"error": f"An error occurred: {e}"}
 
 
-async def getplace(mapX: float, mapY: float) -> Dict[str, Any]:
+async def getplace(mapX: float, mapY: float) -> Dict[int, Any]:
     params = APIRequestParams(
         numOfRows=200,
         pageNo=1,
@@ -90,10 +97,13 @@ async def getplace(mapX: float, mapY: float) -> Dict[str, Any]:
         page_limit = (total_count + params.numOfRows - 1) // params.numOfRows
 
     extracted_data = {}
+    index = 0
     for item in all_data:
         title = item.get('title')
         if title:
-            extracted_data[title] = {
+            index += 1
+            extracted_data[index] = {
+                'title': item.get('title'),
                 'addr1': item.get('addr1'),
                 'contentid': item.get('contentid'),
                 'contenttypeid': item.get('contenttypeid'),
@@ -105,11 +115,33 @@ async def getplace(mapX: float, mapY: float) -> Dict[str, Any]:
 
 
 async def main():
-    mapX = 126.575834
-    mapY = 33.427337
-    result = await getplace(mapX, mapY)
-    #print(result)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    db: Session = SessionLocal()
+    try:
+        spot_id = 10
+        spot_db = db.query(DronespotModel).filter(DronespotModel.id == spot_id).first()
+        if not spot_db:
+            print("Spot not found")
+            return
+
+        mapX = spot_db.lon
+        mapY = spot_db.lat
+        result = await getplace(mapX, mapY)  # 비동기 함수 호출
+        for index in range(1, len(result)):
+            place_data = PlaceModel(
+                name=result[index]['title'],
+                type=result[index]['contentid'],
+                lat=result[index]['mapy'],
+                lon=result[index]['mapx'],
+                address=result[index]['addr1'],
+                place_type_id=result[index]['contenttypeid']
+            )
+            db.add(place_data)
+            db.commit()
+            db.refresh(place_data)
+
+        print("완료")
+    finally:
+        db.close()  # 세션을 명시적으로 종료
 
 
 if __name__ == "__main__":
