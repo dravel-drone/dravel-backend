@@ -170,7 +170,7 @@ async def patch_review(
     return JSONResponse(content=response_data, status_code=200)
 
 
-@router.post("/likereview/{review_id}", status_code=200)
+@router.post("/like/review/{review_id}", status_code=200)
 async def like_review(
         review_id: int,
         db: Session = Depends(get_db),
@@ -203,7 +203,7 @@ async def like_review(
     return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=200)
 
 
-@router.delete("/unlikereview/{review_id}", status_code=200)
+@router.delete("/like/review/{review_id}", status_code=200)
 async def unlike_review(
         review_id: int,
         db: Session = Depends(get_db),
