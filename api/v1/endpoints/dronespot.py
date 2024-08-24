@@ -158,7 +158,8 @@ async def update_dronespot(
 
     likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
         UserDronespotLike.drone_spot_id == dronespot_id).scalar()
-    reviews_count = 0
+    reviews_count = db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot_id).scalar()
 
     return Dronespot(
         id=db_dronespot.id,
@@ -325,7 +326,9 @@ async def get_popular_dronespots(
                 "address": dronespot.address
             },
             "likes_count": likes_count,
-            "reviews_count": 0,
+            "reviews_count": db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot.id
+            ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
             "area": [
