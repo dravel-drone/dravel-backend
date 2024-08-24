@@ -666,7 +666,6 @@ async def get_dronespot(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 32).order_by(func.random()).limit(
         5).all()
 
-    # 랜덤으로 5개의 restaurants 선택
     restaurants = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 39).order_by(func.random()).limit(
         5).all()
