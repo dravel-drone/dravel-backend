@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     PASSWORD_SALT: str = os.getenv('PASSWORD_SALT')
 
+    TOURAPI_LDM_KEY: str = os.getenv('TOURAPI_LDM_KEY')
+
     class Config:
         case_sensitive = True
 

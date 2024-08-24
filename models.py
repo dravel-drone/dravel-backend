@@ -55,6 +55,7 @@ class Refresh(Base):
     __tablename__ = 'refresh'
 
     uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
+    device_id = Column(String(256), nullable=False)
     token = Column(TEXT, nullable=True)
     expired_date = Column(DATETIME, default=datetime.utcnow(),nullable=True)
 
@@ -85,6 +86,8 @@ class Dronespot(Base):
     user_dronespot_likes = relationship('UserDronespotLike', back_populates='dronespot')
     reviews = relationship('Review', back_populates='dronespot')
     course_visits = relationship('CourseVisit', back_populates='dronespot')
+    drone_places = relationship('DronePlace', back_populates='dronespot')
+    trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
 
 class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
@@ -94,6 +97,15 @@ class UserDronespotLike(Base):
 
     user = relationship('User', back_populates='user_dronespot_likes')
     dronespot = relationship('Dronespot', back_populates='user_dronespot_likes')
+
+class TrendDronespot(Base):
+    __tablename__ = 'trend_dronespot'
+
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    count = Column(INTEGER(unsigned=True), nullable=False)
+
+    dronespot = relationship('Dronespot',back_populates='trend_dronespots')
+
 
 class Review(Base):
     __tablename__ = 'review'
@@ -137,6 +149,17 @@ class Place(Base):
 
     place_type = relationship('PlaceType', back_populates='places')
     course_visits = relationship('CourseVisit', back_populates='place')
+    drone_places = relationship('DronePlace', back_populates='place')
+
+class DronePlace(Base):
+    __tablename__ = 'drone_place'
+
+    drone_place_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=False)
+    place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), nullable=False)
+
+    dronespot = relationship('Dronespot', back_populates='drone_places')
+    place = relationship('Place', back_populates='drone_places')
 
 class PlaceType(Base):
     __tablename__ = 'place_type'
