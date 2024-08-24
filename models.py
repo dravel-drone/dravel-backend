@@ -88,6 +88,7 @@ class Dronespot(Base):
     course_visits = relationship('CourseVisit', back_populates='dronespot')
     drone_places = relationship('DronePlace', back_populates='dronespot')
     trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
+    drone_places = relationship('DronePlace', back_populates='dronespot')
 
 class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
@@ -168,7 +169,6 @@ class PlaceType(Base):
     name = Column(String(45), nullable=False)
 
     places = relationship('Place', back_populates='place_type')
-
 
 class Course(Base):
     __tablename__ = 'course'
