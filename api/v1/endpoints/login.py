@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from starlette.responses import JSONResponse
 
 from core.config import settings
@@ -29,8 +30,10 @@ def login(
 
         # 같은 아이디 로그인 시 기존 refresh 토큰 삭제
         existing_refresh_token = db.query(RefreshModel).filter(
-            RefreshModel.uid == user_db.uid,
-            RefreshModel.device_id == user.device_id
+            and_(
+                RefreshModel.uid == user_db.uid,
+                RefreshModel.device_id == user.device_id
+            )
         ).first()
         if existing_refresh_token:
             db.delete(existing_refresh_token)

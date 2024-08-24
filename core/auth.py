@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from starlette import status
 from core.security import decode_refresh_token, create_access_token, decode_access_token
 from database.mariadb_session import get_db
@@ -41,9 +42,11 @@ def update_access_token(refresh_token: str, device_id: str, db: Session = Depend
                 detail="Invalid refresh token")
 
         db_token = db.query(Refresh).filter(
-            Refresh.token == refresh_token,
-            Refresh.uid == str(uid),
-            Refresh.device_id == device_id
+            and_(
+                Refresh.token == refresh_token,
+                Refresh.uid == str(uid),
+                Refresh.device_id == device_id
+            )
         ).first()
 
         if db_token is None or db_token.expired_date < datetime.utcnow():
