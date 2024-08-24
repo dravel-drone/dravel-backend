@@ -71,6 +71,7 @@ class Login(BaseModel):
 
 class Logout(BaseModel):
     device_id: str
+    uid: str
 
 # Follow pydantic 스키마
 class FollowBase(BaseModel):
@@ -84,7 +85,6 @@ class Follow(FollowBase):
 
 # Refresh pydantic 스키마
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
     device_id: str
 
 class AccessTokenResponse(BaseModel):
