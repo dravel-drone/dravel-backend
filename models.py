@@ -123,7 +123,7 @@ class Review(Base):
 
     user = relationship('User', back_populates='reviews')
     dronespot = relationship('Dronespot', back_populates='reviews')
-    user_review_likes = relationship('UserReviewLike', back_populates='review')
+    user_review_likes = relationship('UserReviewLike', back_populates='review', cascade="all, delete-orphan")
 
 class UserReviewLike(Base):
     __tablename__ = 'user_review_like'
