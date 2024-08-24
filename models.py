@@ -86,15 +86,25 @@ class Dronespot(Base):
     reviews = relationship('Review', back_populates='dronespot')
     course_visits = relationship('CourseVisit', back_populates='dronespot')
     drone_places = relationship('DronePlace', back_populates='dronespot')
+    trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
 
 class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
-    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    drone_spot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
 
     user = relationship('User', back_populates='user_dronespot_likes')
     dronespot = relationship('Dronespot', back_populates='user_dronespot_likes')
+
+class TrendDronespot(Base):
+    __tablename__ = 'trend_dronespot'
+
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    count = Column(INTEGER(unsigned=True), nullable=False)
+
+    dronespot = relationship('Dronespot',back_populates='trend_dronespots')
+
 
 class Review(Base):
     __tablename__ = 'review'
