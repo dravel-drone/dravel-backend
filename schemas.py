@@ -171,13 +171,10 @@ class UserReviewLike(UserReviewLikeBase):
 # Place pydantic 스키마
 class PlaceBase(BaseModel):
     name: str
-    comment: Optional[str]
-    photo_url: Optional[str]
-    type: int
-    lat: float
-    lon: float
-    address: str
-    place_type_id: int
+    comment: Optional[str] = None
+    photo_url: Optional[str] = None
+    location: Location
+    place_type_id: Optional[int] = None
 class PlaceCreate(PlaceBase):
     pass
 class Place(PlaceBase):
@@ -221,3 +218,23 @@ class CourseVisitCreate(CourseVisitBase):
 class CourseVisit(CourseVisitBase):
     class Config:
         from_attributes = True
+
+class Places(BaseModel):
+    accommodations: List[Place]
+    restaurants: List[Place]
+
+class DronespotResponse(BaseModel):
+    id: int
+    name: str
+    is_like: Optional[int] = 0
+    likes_count: Optional[int] = 0
+    reviews_count: Optional[int] = 0
+    photo_url: Optional[str]
+    comment: str
+    location: Location
+    area: List[Area]
+    permit: Permit
+    reviews: List[Review]
+    courses: List[Course]
+    places: Places
+
