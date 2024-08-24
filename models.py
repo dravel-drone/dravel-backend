@@ -86,6 +86,7 @@ class Dronespot(Base):
     reviews = relationship('Review', back_populates='dronespot')
     course_visits = relationship('CourseVisit', back_populates='dronespot')
     trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
+    drone_places = relationship('DronePlace', back_populates='dronespot')
 
 class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
@@ -147,6 +148,7 @@ class Place(Base):
 
     place_type = relationship('PlaceType', back_populates='places')
     course_visits = relationship('CourseVisit', back_populates='place')
+    drone_places = relationship('DronePlace', back_populates='place')
 
 class PlaceType(Base):
     __tablename__ = 'place_type'
@@ -156,6 +158,15 @@ class PlaceType(Base):
 
     places = relationship('Place', back_populates='place_type')
 
+class DronePlace(Base):
+    __tablename__ = 'drone_place'
+
+    drone_place_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=False)
+    place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), nullable=False)
+
+    dronespot = relationship('Dronespot', back_populates='drone_places')
+    place = relationship('Place', back_populates='drone_places')
 
 class Course(Base):
     __tablename__ = 'course'
