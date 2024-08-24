@@ -55,6 +55,7 @@ class Refresh(Base):
     __tablename__ = 'refresh'
 
     uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
+    device_id = Column(String(256), nullable=False)
     token = Column(TEXT, nullable=True)
     expired_date = Column(DATETIME, default=datetime.utcnow(),nullable=True)
 
