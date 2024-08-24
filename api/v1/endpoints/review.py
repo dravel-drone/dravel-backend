@@ -386,3 +386,33 @@ def get_review(
     ))
 
     return response
+
+@router.delete("/review/{review_id}", status_code=200)
+def delete_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
+    if not user_db:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 유저를 찾을 수 없습니다."
+        )
+    db_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
+    if not db_review:
+        raise HTTPException(status_code=400, detail="존재하지 않는 리뷰 아이디입니다.")
+
+    if user_db.is_admin == 1:
+        db.delete(db_review)
+        db.commit()
+    elif user_db.is_admin == 0 and user_db.uid == db_review.writer_uid:
+        db.delete(db_review)
+        db.commit()
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="접근할 수 없는 리뷰입니다."
+        )
+
+    return {"message": "해당 리뷰가 삭제되었습니다."}
