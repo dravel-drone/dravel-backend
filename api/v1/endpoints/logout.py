@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from schemas import Logout
 from starlette.responses import JSONResponse
@@ -18,8 +19,10 @@ async def logout(
         db: Session = Depends(get_db)
 ):
     existing_refresh_token = db.query(RefreshModel).filter(
-        RefreshModel.uid == logout_info.uid,
-        RefreshModel.device_id == logout_info.device_id
+        and_(
+            RefreshModel.uid == logout_info.uid,
+            RefreshModel.device_id == logout_info.device_id
+        )
     ).first()
 
     if existing_refresh_token:
