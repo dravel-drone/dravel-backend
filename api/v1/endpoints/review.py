@@ -342,3 +342,47 @@ def get_spot_reviews(
         ))
 
     return response
+
+
+@router.get("/review/{review_id}", response_model=list[Review], status_code=200)
+def get_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    db_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
+    if not db_review:
+        raise HTTPException(status_code=400, detail="존재하지 않는 리뷰 아이디입니다.")
+
+    response = []
+    # 로그인한 유저일 경우, 좋아요 여부 확인
+    if user:
+        is_like = db.query(UserReviewLikeModel).filter(
+            UserReviewLikeModel.review_id == review.id,
+            UserReviewLikeModel.user_uid == user['sub']
+        ).count()
+    else:
+        is_like = 0  # 로그인하지 않은 경우
+
+    like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review_id).count()
+    response.append(Review(
+        id=review_id,
+        writer={
+            "uid": db_review.writer_uid,
+            "name": db_review.user.name
+        },
+        place_name=db_review.dronespot.name,
+        permit={
+            "flight": db_review.permit_flight,
+            "camera": db_review.permit_camera
+        },
+        drone_type=db_review.drone_type,
+        date=db_review.flight_date.isoformat(),
+        comment=db_review.comment if db_review.comment else "",
+        photo=db_review.photo_url if db_review.photo_url else "",
+        like_count=like_count,
+        is_like=is_like
+    ))
+
+    return response
