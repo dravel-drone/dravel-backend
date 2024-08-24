@@ -55,6 +55,7 @@ class Refresh(Base):
     __tablename__ = 'refresh'
 
     uid = Column(String(128), ForeignKey('user.uid'), primary_key=True, nullable=True)
+    device_id = Column(String(256), nullable=False)
     token = Column(TEXT, nullable=True)
     expired_date = Column(DATETIME, default=datetime.utcnow(),nullable=True)
 
@@ -85,6 +86,7 @@ class Dronespot(Base):
     user_dronespot_likes = relationship('UserDronespotLike', back_populates='dronespot')
     reviews = relationship('Review', back_populates='dronespot')
     course_visits = relationship('CourseVisit', back_populates='dronespot')
+    drone_places = relationship('DronePlace', back_populates='dronespot')
     trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
     drone_places = relationship('DronePlace', back_populates='dronespot')
 
@@ -122,7 +124,7 @@ class Review(Base):
 
     user = relationship('User', back_populates='reviews')
     dronespot = relationship('Dronespot', back_populates='reviews')
-    user_review_likes = relationship('UserReviewLike', back_populates='review')
+    user_review_likes = relationship('UserReviewLike', back_populates='review', cascade="all, delete-orphan")
 
 class UserReviewLike(Base):
     __tablename__ = 'user_review_like'
@@ -150,14 +152,6 @@ class Place(Base):
     course_visits = relationship('CourseVisit', back_populates='place')
     drone_places = relationship('DronePlace', back_populates='place')
 
-class PlaceType(Base):
-    __tablename__ = 'place_type'
-
-    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
-    name = Column(String(45), nullable=False)
-
-    places = relationship('Place', back_populates='place_type')
-
 class DronePlace(Base):
     __tablename__ = 'drone_place'
 
@@ -167,6 +161,14 @@ class DronePlace(Base):
 
     dronespot = relationship('Dronespot', back_populates='drone_places')
     place = relationship('Place', back_populates='drone_places')
+
+class PlaceType(Base):
+    __tablename__ = 'place_type'
+
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String(45), nullable=False)
+
+    places = relationship('Place', back_populates='place_type')
 
 class Course(Base):
     __tablename__ = 'course'

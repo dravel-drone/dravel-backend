@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from starlette.responses import JSONResponse
 
 from core.config import settings
@@ -28,7 +29,12 @@ def login(
             raise HTTPException(status_code=400, detail="아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.")
 
         # 같은 아이디 로그인 시 기존 refresh 토큰 삭제
-        existing_refresh_token = db.query(RefreshModel).filter(RefreshModel.uid == user_db.uid).first()
+        existing_refresh_token = db.query(RefreshModel).filter(
+            and_(
+                RefreshModel.uid == user_db.uid,
+                RefreshModel.device_id == user.device_id
+            )
+        ).first()
         if existing_refresh_token:
             db.delete(existing_refresh_token)
             db.commit()
@@ -48,7 +54,8 @@ def login(
         }
         refresh_expires_delta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
         refresh_token, refresh_expire = create_refresh_token(refresh_token_data, refresh_expires_delta)
-        db_refresh = RefreshModel(uid=user_db.uid, token=refresh_token, expired_date=refresh_expire)
+        db_refresh = RefreshModel(
+            uid=user_db.uid, device_id=user.device_id, token=refresh_token, expired_date=refresh_expire)
         db.add(db_refresh)
         db.commit()
         #print(refresh_token)

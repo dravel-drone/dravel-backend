@@ -170,7 +170,7 @@ async def patch_review(
     return JSONResponse(content=response_data, status_code=200)
 
 
-@router.post("/likereview/{review_id}", status_code=200)
+@router.post("/like/review/{review_id}", status_code=200)
 async def like_review(
         review_id: int,
         db: Session = Depends(get_db),
@@ -203,7 +203,7 @@ async def like_review(
     return JSONResponse(content={"메시지": "해당 리뷰에 좋아요 반영이 되었습니다."}, status_code=200)
 
 
-@router.delete("/unlikereview/{review_id}", status_code=200)
+@router.delete("/like/review/{review_id}", status_code=200)
 async def unlike_review(
         review_id: int,
         db: Session = Depends(get_db),
@@ -342,3 +342,77 @@ def get_spot_reviews(
         ))
 
     return response
+
+
+@router.get("/review/{review_id}", response_model=list[Review], status_code=200)
+def get_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    db_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
+    if not db_review:
+        raise HTTPException(status_code=400, detail="존재하지 않는 리뷰 아이디입니다.")
+
+    response = []
+    # 로그인한 유저일 경우, 좋아요 여부 확인
+    if user:
+        is_like = db.query(UserReviewLikeModel).filter(
+            UserReviewLikeModel.review_id == review.id,
+            UserReviewLikeModel.user_uid == user['sub']
+        ).count()
+    else:
+        is_like = 0  # 로그인하지 않은 경우
+
+    like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review_id).count()
+    response.append(Review(
+        id=review_id,
+        writer={
+            "uid": db_review.writer_uid,
+            "name": db_review.user.name
+        },
+        place_name=db_review.dronespot.name,
+        permit={
+            "flight": db_review.permit_flight,
+            "camera": db_review.permit_camera
+        },
+        drone_type=db_review.drone_type,
+        date=db_review.flight_date.isoformat(),
+        comment=db_review.comment if db_review.comment else "",
+        photo=db_review.photo_url if db_review.photo_url else "",
+        like_count=like_count,
+        is_like=is_like
+    ))
+
+    return response
+
+@router.delete("/review/{review_id}", status_code=200)
+def delete_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
+    if not user_db:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 유저를 찾을 수 없습니다."
+        )
+    db_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
+    if not db_review:
+        raise HTTPException(status_code=400, detail="존재하지 않는 리뷰 아이디입니다.")
+
+    if user_db.is_admin == 1:
+        db.delete(db_review)
+        db.commit()
+    elif user_db.is_admin == 0 and user_db.uid == db_review.writer_uid:
+        db.delete(db_review)
+        db.commit()
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="접근할 수 없는 리뷰입니다."
+        )
+
+    return {"message": "해당 리뷰가 삭제되었습니다."}
