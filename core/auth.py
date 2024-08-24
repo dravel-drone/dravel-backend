@@ -29,7 +29,7 @@ def verify_user_token(Authorization: Optional[str] = Header(None)) -> Optional[D
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
-def update_access_token(refresh_token: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
+def update_access_token(refresh_token: str, device_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     try:
         payload = decode_refresh_token(refresh_token)
         uid = payload["sub"]
@@ -42,7 +42,8 @@ def update_access_token(refresh_token: str, db: Session = Depends(get_db)) -> Di
 
         db_token = db.query(Refresh).filter(
             Refresh.token == refresh_token,
-            Refresh.uid == str(uid)
+            Refresh.uid == str(uid),
+            Refresh.device_id == device_id
         ).first()
 
         if db_token is None or db_token.expired_date < datetime.utcnow():
