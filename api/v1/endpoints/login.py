@@ -67,6 +67,7 @@ def login(
             "email": user_db.email,
             "age": user_db.age,
             "drone": user_db.drone,
+            "is_admin": user_db.is_admin,
         })
         response.set_cookie(
             key="access_token",
