@@ -7,8 +7,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
-from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel, TrendDronespot, Review
-from schemas import Dronespot, Permit, Area, Location
+from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
+    Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
+    Review
+from schemas import Dronespot, Permit, Area, Location, DronespotResponse
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
 from starlette.responses import JSONResponse
@@ -156,7 +158,8 @@ async def update_dronespot(
 
     likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
         UserDronespotLike.drone_spot_id == dronespot_id).scalar()
-    reviews_count = 0
+    reviews_count = db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot_id).scalar()
 
     return Dronespot(
         id=db_dronespot.id,
@@ -323,7 +326,9 @@ async def get_popular_dronespots(
                 "address": dronespot.address
             },
             "likes_count": likes_count,
-            "reviews_count": 0,
+            "reviews_count": db.query(func.count(Review.id)).filter(
+                Review.dronespot_id == dronespot.id
+            ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
             "area": [
@@ -587,7 +592,7 @@ async def recommend_dronespots(
     ]
 
     return response_data
-@router.get("/dronespot/{dronespot_id}", response_model=Dronespot)
+@router.get("/dronespot/{dronespot_id}", response_model=DronespotResponse)
 async def get_dronespot(
         dronespot_id: int,
         db: Session = Depends(get_db),
@@ -613,27 +618,27 @@ async def get_dronespot(
         .count() if user_data and user_data.get("sub") else 0
     )
 
-    # test data
-    reviews = [
-        {
-            "id": 1,
-            "writer": {
-                "uid": "user_1",
-                "name": "John Doe"
-            },
-            "place_name": "Sample Place",
-            "permit": {
-                "flight": 1,
-                "camera": 1
-            },
-            "drone_type": "DJI Mavic Air",
-            "date": "2024-08-01",
-            "comment": "Great spot to fly!",
-            "photo": "/media/sample_review_photo.jpg",
-            "like_count": 5,
-            "is_like": 1
-        },
-    ]
+    reviews = db.query(ReviewModel).filter(ReviewModel.dronespot_id == dronespot_id).all()
+
+    review_data = []
+    for review in reviews:
+        writer = db.query(UserModel).filter(UserModel.uid == review.writer_uid).first()
+        review_data.append({
+            "id": review.id,
+            "writer": {"uid": writer.uid, "name": writer.name},
+            "place_name": review.dronespot.name,
+            "permit": {"flight": review.permit_flight, "camera": review.permit_camera},
+            "drone_type": review.drone_type,
+            "date": review.flight_date.isoformat(),
+            "comment": review.comment,
+            "photo": review.photo_url,
+            "like_count": db.query(func.count(UserReviewLike.user_uid)).filter(
+                UserReviewLike.review_id == review.id).scalar(),
+            "is_like": 1 if user_data and db.query(UserReviewLike).filter(
+                UserReviewLike.user_uid == user_data["sub"],
+                UserReviewLike.review_id == review.id
+            ).first() else 0
+        })
 
     courses = [
         {
@@ -657,46 +662,58 @@ async def get_dronespot(
         }
     ]
 
-    accomodations = [
-        {
-            "id": 1,
-            "name": "Sample Hotel",
-            "comment": "Cozy place to stay.",
-            "photo": "/media/sample_accommodation_photo.jpg",
-            "location": {
-                "lat": 37.5665,
-                "lon": 126.978,
-                "address": "Seoul, South Korea"
-            }
-        }
-    ]
+    accommodations = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
+        DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 32).order_by(func.random()).limit(
+        5).all()
 
-    restaurants = [
-        {
-            "id": 1,
-            "name": "Sample Restaurant",
-            "comment": "Delicious food.",
-            "photo": "/media/sample_restaurant_photo.jpg",
-            "location": {
-                "lat": 37.5665,
-                "lon": 126.978,
-                "address": "Seoul, South Korea"
-            }
-        }
-    ]
+    # 랜덤으로 5개의 restaurants 선택
+    restaurants = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
+        DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 39).order_by(func.random()).limit(
+        5).all()
 
-    return {
+    accommodations_data = [{
+        "id": place.id,
+        "name": place.name,
+        "comment": place.comment,
+        "photo": place.photo_url,
+        "location": {
+            "lat": place.lat,
+            "lon": place.lon,
+            "address": place.address
+        },
+        "place_type_id": place.place_type_id
+    } for place in accommodations]
+
+    restaurants_data = [{
+        "id": place.id,
+        "name": place.name,
+        "comment": place.comment,
+        "photo": place.photo_url,
+        "location": {
+            "lat": place.lat,
+            "lon": place.lon,
+            "address": place.address
+        },
+        "place_type_id": place.place_type_id
+    } for place in restaurants]
+
+    response_data = {
         "id": dronespot.id,
         "name": dronespot.name,
         "is_like": is_like,
         "location": {"lat": dronespot.lat, "lon": dronespot.lon, "address": dronespot.address},
         "likes_count": likes_count,
         "reviews_count": len(reviews),
-        "photo": dronespot.photo_url,
+        "photo_url": dronespot.photo_url,
         "comment": dronespot.comment,
         "area": [{"id": 1, "name": "Area 1"}, {"id": 2, "name": "Area 2"}],
         "permit": {"flight": dronespot.permit_flight, "camera": dronespot.permit_camera},
-        "reviews": reviews,
+        "reviews": review_data,
         "courses": courses,
-        "places": {"accomodations": accomodations, "restaurants": restaurants}
+        "places": {
+            "accommodations": accommodations_data,
+            "restaurants": restaurants_data
+        }
     }
+
+    return response_data
