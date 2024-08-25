@@ -74,11 +74,15 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         payload = jwt.decode(token, settings.ACCESS_SECRET_KEY, algorithms=[settings.ACCESS_TOKEN_ENCODE_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
-        print("Token has expired")
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
     except jwt.InvalidTokenError:
-        print("Invalid token")
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
