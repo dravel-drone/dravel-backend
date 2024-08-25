@@ -286,6 +286,33 @@ async def unlike_dronespot(
 
     return JSONResponse(content={"message": "UnLiked successfully"})
 
+@router.get("/api/v1/dronespot/like/{user_uid}", response_model=List[Dronespot])
+async def get_liked_dronespots(
+        user_uid: int,
+        db: Session = Depends(get_db),
+        user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    if not user_data or user_data.get("user_id") != user_uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
+        )
+
+    liked_dronespots = (
+        db.query(Dronespot)
+        .join(UserDronespotLike, Dronespot.id == UserDronespotLike.dronespot_id)
+        .filter(UserDronespotLike.user_id == user_uid)
+        .all()
+    )
+
+    if not liked_dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No liked dronespots found"
+        )
+
+    return liked_dronespots
+
 @router.get("/dronespot/popular", response_model=List[Dronespot])
 async def get_popular_dronespots(
         page_num: int = Query(1, ge=1),
