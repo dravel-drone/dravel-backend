@@ -12,9 +12,9 @@ from models import Refresh
 def verify_user_token(Authorization: Optional[str] = Header(None)) -> Optional[Dict[str, Any]]:
     if Authorization is None:
         return None
+    token = Authorization.split(" ")[1]
+    payload = decode_access_token(token)
     try:
-        token = Authorization.split(" ")[1]
-        payload = decode_access_token(token)
         uid = payload["sub"]
         is_admin = payload["level"]
         print(payload)
@@ -31,8 +31,8 @@ def verify_user_token(Authorization: Optional[str] = Header(None)) -> Optional[D
         ) from e
 
 def update_access_token(refresh_token: str, device_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    payload = decode_refresh_token(refresh_token)
     try:
-        payload = decode_refresh_token(refresh_token)
         uid = payload["sub"]
         is_admin = payload["level"]
 
