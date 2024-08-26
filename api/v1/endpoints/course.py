@@ -1,6 +1,7 @@
 from typing import (
     Dict,
-    Any
+    Any,
+    List
 )
 
 from fastapi import (
@@ -77,7 +78,7 @@ def get_course_with_places(
             if uid is not None:
                 like_exist = db.query(UserDronespotLike).filter(
                     UserDronespotLike.user_uid == uid,
-                    UserDronespotLike.drone_spot_id == like_exist.id
+                    UserDronespotLike.drone_spot_id == v.dronespot_id
                 ).first()
                 if like_exist: is_like = 1
 
@@ -272,3 +273,38 @@ async def get_course(
         )
 
     return get_course_with_places(course_id, db)
+
+@router.get('/course/dronespot/{dronespot_id}', response_model=List[CourseWithPlaces], status_code=status.HTTP_200_OK)
+async def get_courses_include_dronespot(
+        dronespot_id: int,
+        size: int = 5,
+        page: int = 1,
+        user_data: Dict[str, Any] = Depends(verify_user_token),
+        db: Session = Depends(get_db)
+):
+    dronespot_data = db.query(Dronespot).filter(
+        Dronespot.id == dronespot_id
+    ).first()
+    if not dronespot_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="드론스팟 데이터를 찾을 수 없습니다."
+        )
+
+    visit_data = db.query(CourseVisit).filter(
+        CourseVisit.dronespot_id == dronespot_id
+    ).group_by(
+        CourseVisit.course_id,
+        CourseVisit.dronespot_id
+    ).offset((page - 1) * size).limit(size).all()
+
+    user_uid = None
+    if user_data is not None:
+        user_uid = user_data['sub']
+    response_data = []
+    for data in visit_data:
+        response_data.append(get_course_with_places(
+            data.course_id, db, uid=user_uid
+        ))
+
+    return response_data
