@@ -205,8 +205,9 @@ class CourseBase(BaseModel):
     content: str
     distance: int
     duration: int
-class CourseCreate(CourseBase):
-    pass
+class CourseCreate(BaseModel):
+    name: str
+    content: str
 class Course(CourseBase):
     id: int
     class Config:
