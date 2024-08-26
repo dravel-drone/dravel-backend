@@ -228,7 +228,7 @@ async def add_dronespot(
 
     return get_course_with_places(course_id, db)
 
-@router.delete('/course/{course_id}/place/{idx}', status_code=status.HTTP_200_OK)
+@router.delete('/course/{course_id}/place/{idx}', response_model=CourseWithPlaces, status_code=status.HTTP_200_OK)
 async def delete_dronespot(
         course_id: int,
         idx: int,
@@ -254,5 +254,21 @@ async def delete_dronespot(
         )
     db.delete(visit_data[idx][0])
     db.commit()
+
+    return get_course_with_places(course_id, db)
+
+@router.get('/course/{course_id}', response_model=CourseWithPlaces, status_code=status.HTTP_200_OK)
+async def get_course(
+        course_id: int,
+        db: Session = Depends(get_db)
+):
+    course_data = db.query(Course).filter(
+        Course.id == course_id
+    ).first()
+    if not course_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="코스 데이터를 찾을 수 없습니다."
+        )
 
     return get_course_with_places(course_id, db)
