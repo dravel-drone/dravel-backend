@@ -183,7 +183,7 @@ class Course(Base):
     distance = Column(INTEGER, nullable=False)
     duration = Column(INTEGER, nullable=False)
 
-    course_visits = relationship('CourseVisit', back_populates='course')
+    course_visits = relationship('CourseVisit', back_populates='course', cascade='all, delete-orphan')
 
 class CourseVisit(Base):
     __tablename__ = 'course_visit'

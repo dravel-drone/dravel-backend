@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
 
 
@@ -212,6 +212,12 @@ class Course(CourseBase):
     id: int
     class Config:
         from_attributes = True
+
+class CourseWithPlaces(Course):
+    places: List[Union[Place, Dronespot]] = []
+
+    class Config:
+        orm_mode = True
 
 
 # CourseVisit pydantic 스키마
