@@ -7,7 +7,8 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    status
+    status,
+    Response
 )
 from sqlalchemy.orm import Session
 
@@ -46,3 +47,33 @@ async def create_curse(
 
     return course_model
 
+
+@router.delete("/course/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_curse(
+        course_id: int,
+        user_data: Dict[str, Any] = Depends(verify_user_token),
+        db: Session = Depends(get_db)
+):
+    if user_data is None or not user_data.get("level"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    course_exists = db.query(Course).filter(
+        Course.id == course_id,
+    ).first()
+
+    if not course_exists:
+        raise HTTPException(
+            status_code=400,
+            detail="This course data does not exist",
+        )
+
+    db.delete(course_exists)
+    db.commit()
+
+    return Response(
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
