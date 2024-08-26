@@ -97,13 +97,13 @@ class Location(BaseModel):
     lon: float
     address: str
 
-class Permit(BaseModel):
-    flight: int
-    camera: int
-
 class Area(BaseModel):
     id: int
     name: str
+
+class Permit(BaseModel):
+    flight: int
+    camera: int
 
 class DronespotBase(BaseModel):
     name: str
@@ -141,10 +141,6 @@ class UserDronespotLike(UserDronespotLikeBase):
 class Writer(BaseModel):
     uid: str
     name: str
-
-class Permit(BaseModel):
-    flight: int
-    camera: int
 
 class Review(BaseModel):
     id: int
@@ -217,7 +213,7 @@ class CourseWithPlaces(Course):
     places: List[Union[Place, Dronespot]] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # CourseVisit pydantic 스키마

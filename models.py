@@ -188,7 +188,8 @@ class Course(Base):
 class CourseVisit(Base):
     __tablename__ = 'course_visit'
 
-    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), nullable=False)
     dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=True)
     place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), nullable=True)
 
