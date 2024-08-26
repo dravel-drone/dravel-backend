@@ -227,3 +227,32 @@ async def add_dronespot(
     db.refresh(course_visit)
 
     return get_course_with_places(course_id, db)
+
+@router.delete('/course/{course_id}/place/{idx}', status_code=status.HTTP_200_OK)
+async def delete_dronespot(
+        course_id: int,
+        idx: int,
+        user_data: Dict[str, Any] = Depends(verify_user_token),
+        db: Session = Depends(get_db)
+):
+    check_admin(user_data)
+
+    course_data = db.query(Course).filter(
+        Course.id == course_id
+    ).first()
+    if not course_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="코스 데이터를 찾을 수 없습니다."
+        )
+
+    visit_data = db.execute(select(CourseVisit).where(CourseVisit.course_id == course_id)).all()
+    if len(visit_data) - 1 < idx:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{idx} 번째 장소는 존재하지 않습니다."
+        )
+    db.delete(visit_data[idx][0])
+    db.commit()
+
+    return get_course_with_places(course_id, db)
