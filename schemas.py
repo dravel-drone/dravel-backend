@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
 
 
@@ -97,13 +97,13 @@ class Location(BaseModel):
     lon: float
     address: str
 
-class Permit(BaseModel):
-    flight: int
-    camera: int
-
 class Area(BaseModel):
     id: int
     name: str
+
+class Permit(BaseModel):
+    flight: int
+    camera: int
 
 class DronespotBase(BaseModel):
     name: str
@@ -141,10 +141,6 @@ class UserDronespotLike(UserDronespotLikeBase):
 class Writer(BaseModel):
     uid: str
     name: str
-
-class Permit(BaseModel):
-    flight: int
-    camera: int
 
 class Review(BaseModel):
     id: int
@@ -205,10 +201,17 @@ class CourseBase(BaseModel):
     content: str
     distance: int
     duration: int
-class CourseCreate(CourseBase):
-    pass
+class CourseCreate(BaseModel):
+    name: str
+    content: str
 class Course(CourseBase):
     id: int
+    class Config:
+        from_attributes = True
+
+class CourseWithPlaces(Course):
+    places: List[Union[Place, Dronespot]] = []
+
     class Config:
         from_attributes = True
 

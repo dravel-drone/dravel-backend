@@ -183,12 +183,13 @@ class Course(Base):
     distance = Column(INTEGER, nullable=False)
     duration = Column(INTEGER, nullable=False)
 
-    course_visits = relationship('CourseVisit', back_populates='course')
+    course_visits = relationship('CourseVisit', back_populates='course', cascade='all, delete-orphan')
 
 class CourseVisit(Base):
     __tablename__ = 'course_visit'
 
-    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), primary_key=True, nullable=False)
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    course_id = Column(INTEGER(unsigned=True), ForeignKey('course.id'), nullable=False)
     dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=True)
     place_id = Column(INTEGER(unsigned=True), ForeignKey('place.id'), nullable=True)
 
