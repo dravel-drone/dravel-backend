@@ -7,7 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
-from models import UserDronespotLike, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
+from models import UserDronespotLike as UserDronespotLikeModel, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
     Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
     Review
 from schemas import Dronespot, Permit, Area, Location, DronespotResponse
@@ -148,16 +148,16 @@ async def update_dronespot(
     db.refresh(db_dronespot)
 
     is_like = (
-        db.query(UserDronespotLike)
+        db.query(UserDronespotLikeModel)
         .filter(
-            UserDronespotLike.user_uid == user_data["sub"],
-            UserDronespotLike.drone_spot_id == dronespot_id
+            UserDronespotLikeModel.user_uid == user_data["sub"],
+            UserDronespotLikeModel.drone_spot_id == dronespot_id
         )
         .count()
     )
 
-    likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
-        UserDronespotLike.drone_spot_id == dronespot_id).scalar()
+    likes_count = db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+        UserDronespotLikeModel.drone_spot_id == dronespot_id).scalar()
     reviews_count = db.query(func.count(Review.id)).filter(
                 Review.dronespot_id == dronespot_id).scalar()
 
@@ -229,9 +229,9 @@ async def like_dronespot(
             detail="Dronespot not found"
         )
 
-    like_exists = db.query(UserDronespotLike).filter(
-        UserDronespotLike.user_uid == user_uid,
-        UserDronespotLike.drone_spot_id == dronespot_id
+    like_exists = db.query(UserDronespotLikeModel).filter(
+        UserDronespotLikeModel.user_uid == user_uid,
+        UserDronespotLikeModel.drone_spot_id == dronespot_id
     ).first()
     if like_exists:
         raise HTTPException(
@@ -239,7 +239,7 @@ async def like_dronespot(
             detail="User already liked this dronespot"
         )
 
-    new_like = UserDronespotLike(
+    new_like = UserDronespotLikeModel(
         user_uid=user_uid,
         drone_spot_id=dronespot_id
     )
@@ -271,9 +271,9 @@ async def unlike_dronespot(
             detail="Dronespot not found"
         )
 
-    like_exists = db.query(UserDronespotLike).filter(
-        UserDronespotLike.user_uid == user_uid,
-        UserDronespotLike.drone_spot_id == dronespot_id
+    like_exists = db.query(UserDronespotLikeModel).filter(
+        UserDronespotLikeModel.user_uid == user_uid,
+        UserDronespotLikeModel.drone_spot_id == dronespot_id
     ).first()
     if not like_exists:
         raise HTTPException(
@@ -286,6 +286,64 @@ async def unlike_dronespot(
 
     return JSONResponse(content={"message": "UnLiked successfully"})
 
+@router.get("/dronespot/like/{user_uid}", response_model=List[Dronespot])
+async def get_liked_dronespots(
+        user_uid: str,
+        db: Session = Depends(get_db),
+        user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    if not user_data or user_data.get("sub") != user_uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
+        )
+
+    liked_dronespots = (
+        db.query(DronespotModel)
+        .join(UserDronespotLikeModel, DronespotModel.id == UserDronespotLikeModel.drone_spot_id)
+        .filter(UserDronespotLikeModel.user_uid == user_uid)
+        .all()
+    )
+
+    if not liked_dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No liked dronespots found"
+        )
+
+    response_data = []
+    for dronespot in liked_dronespots:
+        dronespot_data = {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": 1,
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address
+            },
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
+            ).scalar(),
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
+            ).scalar(),
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera
+            }
+        }
+        response_data.append(dronespot_data)
+
+    return response_data
+
 @router.get("/dronespot/popular", response_model=List[Dronespot])
 async def get_popular_dronespots(
         page_num: int = Query(1, ge=1),
@@ -295,10 +353,10 @@ async def get_popular_dronespots(
 ):
     dronespots_query = db.query(
         DronespotModel,
-        func.count(UserDronespotLike.user_uid).label('likes_count')
-    ).outerjoin(UserDronespotLike, DronespotModel.id == UserDronespotLike.drone_spot_id) \
+        func.count(UserDronespotLikeModel.user_uid).label('likes_count')
+    ).outerjoin(UserDronespotLikeModel, DronespotModel.id == UserDronespotLikeModel.drone_spot_id) \
      .group_by(DronespotModel.id) \
-     .order_by(func.count(UserDronespotLike.user_uid).desc()) \
+     .order_by(func.count(UserDronespotLikeModel.user_uid).desc()) \
      .offset((page_num - 1) * size) \
      .limit(size)
 
@@ -316,9 +374,9 @@ async def get_popular_dronespots(
         {
             "id": dronespot.id,
             "name": dronespot.name,
-            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
-                UserDronespotLike.user_uid == user_uid,
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).first() else 0,
             "location": {
                 "lat": dronespot.lat,
@@ -381,17 +439,17 @@ async def search_dronespots_by_keyword(
         {
             "id": dronespot.id,
             "name": dronespot.name,
-            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
-                UserDronespotLike.user_uid == user_uid,
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).first() else 0,
             "location": {
                 "lat": dronespot.lat,
                 "lon": dronespot.lon,
                 "address": dronespot.address
             },
-            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).scalar(),
             "reviews_count": db.query(func.count(Review.id)).filter(
                 Review.dronespot_id == dronespot.id
@@ -440,17 +498,17 @@ async def get_popular_dronespots_by_keyword(
         {
             "id": dronespot.id,
             "name": dronespot.name,
-            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
-                UserDronespotLike.user_uid == user_uid,
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).first() else 0,
             "location": {
                 "lat": dronespot.lat,
                 "lon": dronespot.lon,
                 "address": dronespot.address
             },
-            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).scalar(),
             "reviews_count": db.query(func.count(Review.id)).filter(
                 Review.dronespot_id == dronespot.id
@@ -506,10 +564,10 @@ async def get_dronespot_by_area(
             "id": dronespot.id,
             "name": dronespot.name,
             "is_like": (
-                db.query(UserDronespotLike)
+                db.query(UserDronespotLikeModel)
                 .filter(
-                    UserDronespotLike.user_uid == user_uid,
-                    UserDronespotLike.drone_spot_id == dronespot.id
+                    UserDronespotLikeModel.user_uid == user_uid,
+                    UserDronespotLikeModel.drone_spot_id == dronespot.id
                 )
                 .count() if user_uid else 0
             ),
@@ -518,8 +576,8 @@ async def get_dronespot_by_area(
                 "lon": dronespot.lon,
                 "address": dronespot.address,
             },
-            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
-                UserDronespotLike.drone_spot_id == dronespot.id).scalar(),
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id).scalar(),
             "reviews_count": db.query(func.count(Review.id)).filter(
                 Review.dronespot_id == dronespot.id).scalar(),
             "photo": dronespot.photo_url,
@@ -564,17 +622,17 @@ async def recommend_dronespots(
         {
             "id": dronespot.id,
             "name": dronespot.name,
-            "is_like": 1 if user_uid and db.query(UserDronespotLike).filter(
-                UserDronespotLike.user_uid == user_uid,
-                UserDronespotLike.drone_spot_id == dronespot.id
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).first() else 0,
             "location": {
                 "lat": dronespot.lat,
                 "lon": dronespot.lon,
                 "address": dronespot.address
             },
-            "likes_count": db.query(func.count(UserDronespotLike.user_uid)).filter(
-                UserDronespotLike.drone_spot_id == dronespot.id).scalar(),
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id).scalar(),
             "reviews_count": db.query(func.count(Review.id)).filter(
                 Review.dronespot_id == dronespot.id).scalar(),
             "photo": dronespot.photo_url,
@@ -606,14 +664,14 @@ async def get_dronespot(
             detail="Dronespot not found"
         )
 
-    likes_count = db.query(func.count(UserDronespotLike.user_uid)).filter(
-        UserDronespotLike.drone_spot_id == dronespot_id).scalar()
+    likes_count = db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+        UserDronespotLikeModel.drone_spot_id == dronespot_id).scalar()
 
     is_like = (
-        db.query(UserDronespotLike)
+        db.query(UserDronespotLikeModel)
         .filter(
-            UserDronespotLike.user_uid == user_data["sub"],
-            UserDronespotLike.drone_spot_id == dronespot_id
+            UserDronespotLikeModel.user_uid == user_data["sub"],
+            UserDronespotLikeModel.drone_spot_id == dronespot_id
         )
         .count() if user_data and user_data.get("sub") else 0
     )
@@ -666,7 +724,6 @@ async def get_dronespot(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 32).order_by(func.random()).limit(
         5).all()
 
-    # 랜덤으로 5개의 restaurants 선택
     restaurants = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 39).order_by(func.random()).limit(
         5).all()
