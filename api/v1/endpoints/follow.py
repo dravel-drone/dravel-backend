@@ -102,6 +102,49 @@ async def cancel_following(
 
     return target_user
 
+@router.delete("/follow/follower/{target_uid}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_following(
+        target_uid: str,
+        user_data: Dict[str, Any] = Depends(verify_user_token),
+        db: Session = Depends(get_db)
+):
+    if user_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="로그인한 유저만 사용 가능합니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    uid = user_data["sub"]
+    user = db.query(User).filter(
+        User.uid == uid
+    ).first()
+    target_user = db.query(User).filter(
+        User.uid == target_uid
+    ).first()
+    if user is None or target_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 사용자입니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    follow_follower = db.query(Follow).filter(
+        Follow.follower_uid == target_user.uid,
+        Follow.following_uid == user.uid
+    ).first()
+
+    if follow_follower is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='해당 유저는 팔로우 하지 않습니다.'
+        )
+
+    db.delete(follow_follower)
+    db.commit()
+
+    return target_user
+
 @router.get("/follow/following", response_model=List[FollowingSchema], status_code=status.HTTP_200_OK)
 async def list_following(
         size: int = 20,
