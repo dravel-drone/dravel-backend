@@ -14,7 +14,7 @@ from core.auth import verify_user_token
 router = APIRouter()
 
 @router.post("/follow/{target_uid}", response_model=FollowingSchema, status_code=status.HTTP_200_OK)
-async def refresh_access_token(
+async def following(
         target_uid: str,
         user_data: Dict[str, Any] = Depends(verify_user_token),
         db: Session = Depends(get_db)
