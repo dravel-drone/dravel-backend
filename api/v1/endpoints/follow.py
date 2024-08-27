@@ -8,7 +8,7 @@ from schemas import (
     Following as FollowingSchema,
 )
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from core.auth import verify_user_token
 
 router = APIRouter()
@@ -101,3 +101,46 @@ async def cancel_following(
     db.commit()
 
     return target_user
+
+@router.get("/follow/follower", response_model=List[FollowingSchema], status_code=status.HTTP_200_OK)
+async def cancel_following(
+        size: int = 20,
+        page: int = 1,
+        user_data: Dict[str, Any] = Depends(verify_user_token),
+        db: Session = Depends(get_db)
+):
+    if user_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="로그인한 유저만 사용 가능합니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    uid = user_data["sub"]
+    user = db.query(User).filter(
+        User.uid == uid
+    ).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 사용자입니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    following_list = db.query(Follow).filter(
+        Follow.follower_uid == user.uid,
+    ).offset((page - 1) * size).limit(size).all()
+
+    user_list = []
+    for following in following_list:
+        following_info = following.following
+        user_list.append({
+            'uid': following_info.uid,
+            'name': following_info.name,
+            'email': following_info.email,
+            'drone': following_info.drone,
+            'image': following_info.image,
+            'one_liner': following_info.one_liner,
+        })
+
+    return user_list
