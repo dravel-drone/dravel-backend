@@ -102,8 +102,8 @@ async def cancel_following(
 
     return target_user
 
-@router.get("/follow/follower", response_model=List[FollowingSchema], status_code=status.HTTP_200_OK)
-async def cancel_following(
+@router.get("/follow/following", response_model=List[FollowingSchema], status_code=status.HTTP_200_OK)
+async def list_following(
         size: int = 20,
         page: int = 1,
         user_data: Dict[str, Any] = Depends(verify_user_token),
