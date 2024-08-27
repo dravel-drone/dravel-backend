@@ -74,6 +74,10 @@ class Follow(Base):
     follower = relationship('User', foreign_keys=[follower_uid], back_populates='followings')
     following = relationship('User', foreign_keys=[following_uid], back_populates='followers')
 
+    __table_args__ = (
+        PrimaryKeyConstraint('follower_uid', 'following_uid', name='PRIMARY'),
+    )
+
 class Dronespot(Base):
     __tablename__ ='dronespot'
 

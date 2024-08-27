@@ -83,6 +83,15 @@ class Follow(FollowBase):
     class Config:
         from_attributes = True
 
+class Following(BaseModel):
+    uid: str
+    name: str
+    email: str
+    drone: Optional[str]
+    image: Optional[str]
+    one_liner: Optional[str]
+
+
 # Refresh pydantic 스키마
 class RefreshTokenRequest(BaseModel):
     device_id: str

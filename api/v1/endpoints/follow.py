@@ -2,17 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from database.mariadb_session import get_db
 
-from models import User
+from models import User, Follow
+from schemas import (
+    User as UserSchema,
+    Following as FollowingSchema,
+)
 
 from typing import Dict, Any
 from core.auth import verify_user_token
 
 router = APIRouter()
 
-@router.post("/follow/{target_uid}")
+@router.post("/follow/{target_uid}", response_model=FollowingSchema, status_code=status.HTTP_200_OK)
 async def refresh_access_token(
         target_uid: str,
-        request: Request,
         user_data: Dict[str, Any] = Depends(verify_user_token),
         db: Session = Depends(get_db)
 ):
@@ -37,4 +40,11 @@ async def refresh_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    follow_follower = Follow(
+        follower_uid=user.uid,
+        following_uid=target_user.uid,
+    )
+    db.add(follow_follower)
+    db.commit()
 
+    return target_user
