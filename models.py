@@ -49,6 +49,7 @@ class User(Base):
     reviews = relationship('Review', back_populates='user')
     user_review_likes = relationship('UserReviewLike', back_populates='user')
     refresh_tokens = relationship("Refresh", back_populates='user')
+    review_report = relationship("ReviewReport", back_populates='user')
 
 
 class Refresh(Base):
@@ -129,10 +130,23 @@ class Review(Base):
     flight_date = Column(DateTime, nullable=False)
     comment = Column(Text, nullable=True)
     photo_url = Column(Text, nullable=True)
+    is_reported = Column(TINYINT(1), nullable=False, default=0)
 
     user = relationship('User', back_populates='reviews')
     dronespot = relationship('Dronespot', back_populates='reviews')
     user_review_likes = relationship('UserReviewLike', back_populates='review', cascade="all, delete-orphan")
+    review_report = relationship('ReviewReport', back_populates='reviews')
+
+class ReviewReport(Base):
+    __tablename__ = "review_report"
+
+    id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
+    review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), nullable=False)
+    user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
+
+    user = relationship('User', back_populates='review_report')
+    reviews = relationship('Review', back_populates='review_report')
+
 
 class UserReviewLike(Base):
     __tablename__ = 'user_review_like'
