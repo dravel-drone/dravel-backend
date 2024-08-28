@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -8,7 +8,13 @@ from starlette.staticfiles import StaticFiles
 
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
-from models import Review as ReviewModel, Dronespot as DronespotModel, User as UserModel, UserReviewLike as UserReviewLikeModel
+from models import (
+    Review as ReviewModel,
+    Dronespot as DronespotModel,
+    User as UserModel,
+    UserReviewLike as UserReviewLikeModel,
+    ReviewReport as ReviewReportModel
+)
 import os
 
 from schemas import Review
@@ -31,6 +37,7 @@ async def create_review(
 ):
     user_db = db.query(UserModel).filter(UserModel.uid == user.get("sub")).first()
     print(user_db)
+
     # 드론 스팟 확인
     drone_spot = db.query(DronespotModel).filter(DronespotModel.id == drone_spot_id).first()
     if not drone_spot:
@@ -359,7 +366,7 @@ def get_review(
     # 로그인한 유저일 경우, 좋아요 여부 확인
     if user:
         is_like = db.query(UserReviewLikeModel).filter(
-            UserReviewLikeModel.review_id == review.id,
+            UserReviewLikeModel.review_id == db_review.id,
             UserReviewLikeModel.user_uid == user['sub']
         ).count()
     else:
@@ -416,3 +423,62 @@ def delete_review(
         )
 
     return {"message": "해당 리뷰가 삭제되었습니다."}
+
+@router.post('/review/report/{review_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def report_review(
+        review_id: int,
+        db: Session = Depends(get_db),
+        user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    if user_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="로그인한 유저만 사용 가능합니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    uid = user_data["sub"]
+    user = db.query(UserModel).filter(
+        UserModel.uid == uid
+    ).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 사용자입니다.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    review = db.query(ReviewModel).filter(
+        ReviewModel.id == review_id
+    ).first()
+    if review is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 리뷰입니다.",
+        )
+
+    review_report = db.query(ReviewReportModel).filter(
+        ReviewReportModel.review_id == review_id,
+        ReviewReportModel.user_uid == uid
+    ).first()
+    if review_report is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 신고한 리뷰입니다.",
+        )
+
+    review_report = ReviewReportModel(
+        review_id=review_id,
+        user_uid=uid
+    )
+    db.add(review_report)
+    db.commit()
+
+    report_count = db.query(func.count(ReviewReportModel.id)).filter(
+        ReviewReportModel.review_id == review_id,
+        ReviewReportModel.user_uid == uid
+    ).scalar()
+    print(report_count)
+    if report_count >= 10:
+        review.is_reported = 1
+        db.commit()
