@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
 from fastapi.responses import JSONResponse
@@ -391,6 +391,51 @@ def get_review(
         like_count=like_count,
         is_like=is_like
     ))
+
+    return response
+
+
+@router.get("/trend/review", response_model=List[Review], status_code=200)
+def get_trend_reviews(
+    page_num: int = 1,
+    size: int = 10,
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+
+    reviews = (db.query(ReviewModel).order_by(func.random())
+               .offset((page_num - 1) * size).limit(size).all())
+
+    response = []
+    for review in reviews:
+        # 로그인한 유저일 경우, 좋아요 여부 확인
+        if user:
+            is_like = db.query(UserReviewLikeModel).filter(
+                UserReviewLikeModel.review_id == review.id,
+                UserReviewLikeModel.user_uid == user['sub']
+            ).count()
+        else:
+            is_like = 0  # 로그인하지 않은 경우
+
+        like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
+        response.append(Review(
+            id=review.id,
+            writer={
+                "uid": review.writer_uid,
+                "name": review.user.name
+            },
+            place_name=review.dronespot.name,
+            permit={
+                "flight": review.permit_flight,
+                "camera": review.permit_camera
+            },
+            drone_type=review.drone_type,
+            date=review.flight_date.isoformat(),
+            comment=review.comment if review.comment else "",
+            photo=review.photo_url if review.photo_url else "",
+            like_count=like_count,
+            is_like=is_like
+        ))
 
     return response
 
