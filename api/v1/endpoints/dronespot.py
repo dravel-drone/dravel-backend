@@ -1,4 +1,5 @@
 import os
+import uuid
 from math import radians
 import random
 from typing import Optional, Dict, Any, List
@@ -56,7 +57,7 @@ async def create_dronespot(
     photo_url = None
     if file:
         file_extension = os.path.splitext(file.filename)[1]
-        new_filename = f"dronespot_{db_dronespot.id}_{name}{file_extension}"
+        new_filename = f"dronespot_{str(uuid.uuid4())}{file_extension}"
         save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
@@ -138,7 +139,7 @@ async def update_dronespot(
 
     if file:
         file_extension = os.path.splitext(file.filename)[1]
-        new_filename = f"dronespot_{db_dronespot.id}_{db_dronespot.name}{file_extension}"
+        new_filename = f"dronespot_{str(uuid.uuid4())}{file_extension}"
         save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
