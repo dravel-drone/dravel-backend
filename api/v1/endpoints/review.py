@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
@@ -15,13 +16,12 @@ from models import (
     UserReviewLike as UserReviewLikeModel,
     ReviewReport as ReviewReportModel
 )
+from core.config import settings
 import os
 
 from schemas import Review
 
 router = APIRouter()
-MEDIA_DIR = "media"
-router.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 
 @router.post("/review/{drone_spot_id}", response_model=Review, status_code=200)
@@ -61,8 +61,8 @@ async def create_review(
     photo_url = None
     if file:
         file_extension = os.path.splitext(file.filename)[1]
-        new_filename = f"review_{drone_spot_id}_{date}{file_extension}"
-        save_path = os.path.join(MEDIA_DIR, new_filename)
+        new_filename = f"review_{str(uuid.uuid4())}{file_extension}"
+        save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
         photo_url = f"/media/{new_filename}"
@@ -133,8 +133,8 @@ async def patch_review(
 
     if file:
         file_extension = os.path.splitext(file.filename)[1]
-        new_filename = f"review_{db_review.dronespot_id}_{date}{file_extension}"
-        save_path = os.path.join(MEDIA_DIR, new_filename)
+        new_filename = f"review_{str(uuid.uuid4())}{file_extension}"
+        save_path = os.path.join(settings.MEDIA_DIR, new_filename)
         with open(save_path, "wb") as f:
             f.write(await file.read())
         photo_url = f"/media/{new_filename}"
