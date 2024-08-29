@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 
-from api.v1.endpoints import test, terms, register, login, logout, dronespot, refresh, review, course, follow, profile
+from api.v1.endpoints import test, terms, register, login, logout, dronespot, refresh, review, course, follow
 
 # api_router = APIRouter()
 # api_router.include_router(test.router, prefix="/test", tags=["test"])
@@ -16,4 +16,3 @@ router.include_router(dronespot.router)
 router.include_router(review.router)
 router.include_router(course.router)
 router.include_router(follow.router)
-router.include_router(profile.router)
