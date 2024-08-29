@@ -73,6 +73,21 @@ class Logout(BaseModel):
     device_id: str
     uid: str
 
+# 유저 프로필 스키마
+class Profile(BaseModel):
+    uid: str
+    name: str
+    image: Optional[str]
+    post_count: int
+    follower_count: int
+    following_count: int
+    one_liner: str
+    drone: Optional[str]
+    is_following: Optional[int]
+
+    class Config:
+        from_attributes = True
+
 # Follow pydantic 스키마
 class FollowBase(BaseModel):
     follower_uid: str
