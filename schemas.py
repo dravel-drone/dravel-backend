@@ -145,6 +145,7 @@ class Dronespot(DronespotBase):
     reviews_count: Optional[int] = 0
     photo: Optional[str]
     area: List[Area]
+    drone_type: Optional[int] = 0
 
     class Config:
         from_attributes = True
