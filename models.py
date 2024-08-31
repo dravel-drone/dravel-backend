@@ -91,6 +91,7 @@ class Dronespot(Base):
     comment = Column(String(200), nullable=False)
     permit_flight = Column(TINYINT(1), nullable=False)
     permit_camera = Column(TINYINT(1), nullable=False)
+    drone_type = Column(TINYINT(1), nullable=False)
 
     user_dronespot_likes = relationship('UserDronespotLike', back_populates='dronespot')
     reviews = relationship('Review', back_populates='dronespot')

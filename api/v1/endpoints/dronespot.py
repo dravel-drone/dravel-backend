@@ -10,7 +10,7 @@ from starlette.staticfiles import StaticFiles
 
 from models import UserDronespotLike as UserDronespotLikeModel, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
     Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
-    Review
+    CourseVisit as CourseVisitModel
 from schemas import Dronespot, Permit, Area, Location, DronespotResponse
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
@@ -159,8 +159,8 @@ async def update_dronespot(
 
     likes_count = db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
         UserDronespotLikeModel.drone_spot_id == dronespot_id).scalar()
-    reviews_count = db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot_id).scalar()
+    reviews_count = db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot_id).scalar()
 
     return Dronespot(
         id=db_dronespot.id,
@@ -385,8 +385,8 @@ async def get_popular_dronespots(
                 "address": dronespot.address
             },
             "likes_count": likes_count,
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
             ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
@@ -403,74 +403,6 @@ async def get_popular_dronespots(
     ]
 
     return response_data
-
-@router.get("/dronespot/keyword", response_model=List[Dronespot])
-async def search_dronespots_by_keyword(
-    keyword: str,
-    page_num: int = Query(1, ge=1),
-    size: int = Query(10, ge=1),
-    db: Session = Depends(get_db),
-    user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
-):
-
-    starting_with_keyword = db.query(DronespotModel).filter(
-        DronespotModel.name.ilike(f"{keyword}%")
-    ).order_by(DronespotModel.name).all()
-
-    containing_keyword = db.query(DronespotModel).filter(
-        DronespotModel.name.ilike(f"%{keyword}%")
-    ).filter(
-        ~DronespotModel.id.in_([spot.id for spot in starting_with_keyword])
-    ).order_by(DronespotModel.name).all()
-
-    for dronespot in starting_with_keyword + containing_keyword:
-        trend_spot = db.query(TrendDronespot).filter(TrendDronespot.dronespot_id == dronespot.id).first()
-        if trend_spot:
-            trend_spot.count += 1
-        else:
-            trend_spot = TrendDronespot(dronespot_id=dronespot.id, count=1)
-            db.add(trend_spot)
-        db.add(dronespot)
-    db.commit()
-
-    dronespots = (starting_with_keyword + containing_keyword)[(page_num - 1) * size : page_num * size]
-
-    user_uid = user_data.get("sub") if user_data else None
-    response_data = [
-        {
-            "id": dronespot.id,
-            "name": dronespot.name,
-            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
-                UserDronespotLikeModel.user_uid == user_uid,
-                UserDronespotLikeModel.drone_spot_id == dronespot.id
-            ).first() else 0,
-            "location": {
-                "lat": dronespot.lat,
-                "lon": dronespot.lon,
-                "address": dronespot.address
-            },
-            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
-                UserDronespotLikeModel.drone_spot_id == dronespot.id
-            ).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
-            ).scalar(),
-            "photo": dronespot.photo_url,
-            "comment": dronespot.comment,
-            "area": [
-                {"id": 1, "name": "Area 1"},
-                {"id": 2, "name": "Area 2"}
-            ],
-            "permit": {
-                "flight": dronespot.permit_flight,
-                "camera": dronespot.permit_camera
-            }
-        }
-        for dronespot in dronespots
-    ]
-
-    return response_data
-
 
 @router.get("/dronespot/keyword/popular", response_model=List[Dronespot])
 async def get_popular_dronespots_by_keyword(
@@ -511,8 +443,8 @@ async def get_popular_dronespots_by_keyword(
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
                 UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
             ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
@@ -530,33 +462,81 @@ async def get_popular_dronespots_by_keyword(
 
     return response_data
 
-@router.get("/dronespot/area", response_model=List[Dronespot])
-async def get_dronespot_by_area(
-    lat: float,
-    lon: float,
-    area: float,
+@router.get("/dronespot/search", response_model=List[Dronespot])
+async def search_dronespots(
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None),
+    area: Optional[float] = Query(None),
+    keyword: Optional[str] = Query(None),
+    drone_type: Optional[int] = Query(None),
     page_num: int = Query(1, ge=1),
     size: int = Query(10, ge=1),
     db: Session = Depends(get_db),
     user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
 ):
 
-    lat_radians = radians(lat)
-    lon_radians = radians(lon)
-
-    distance_formula = (
-        6371 * func.acos(
-            func.cos(lat_radians) * func.cos(func.radians(DronespotModel.lat)) *
-            func.cos(func.radians(DronespotModel.lon) - lon_radians) +
-            func.sin(lat_radians) * func.sin(func.radians(DronespotModel.lat))
+    if (lat is not None or lon is not None or area is not None) and (lat is None or lon is None or area is None):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="lat, lon, and area must all be provided if any are provided"
         )
-    )
 
-    dronespots_query = db.query(DronespotModel).filter(
-        distance_formula <= area
-    ).order_by(distance_formula).offset((page_num - 1) * size).limit(size)
+    dronespots_query = db.query(DronespotModel)
+
+    if lat is not None and lon is not None and area is not None:
+        lat_radians = radians(lat)
+        lon_radians = radians(lon)
+
+        distance_formula = (
+            6371 * func.acos(
+                func.cos(lat_radians) * func.cos(func.radians(DronespotModel.lat)) *
+                func.cos(func.radians(DronespotModel.lon) - lon_radians) +
+                func.sin(lat_radians) * func.sin(func.radians(DronespotModel.lat))
+            )
+        )
+
+        dronespots_query = dronespots_query.filter(distance_formula <= area)
+
+    if keyword:
+        starting_with_keyword = dronespots_query.filter(
+            DronespotModel.name.ilike(f"{keyword}%")
+        )
+        containing_keyword = dronespots_query.filter(
+            DronespotModel.name.ilike(f"%{keyword}%")
+        ).filter(
+            ~DronespotModel.id.in_([spot.id for spot in starting_with_keyword])
+        )
+        dronespots_query = starting_with_keyword.union_all(containing_keyword)
+
+        for dronespot in starting_with_keyword.all() + containing_keyword.all():
+            trend_spot = db.query(TrendDronespot).filter(TrendDronespot.dronespot_id == dronespot.id).first()
+            if trend_spot:
+                trend_spot.count += 1
+            else:
+                trend_spot = TrendDronespot(dronespot_id=dronespot.id, count=1)
+                db.add(trend_spot)
+            db.add(dronespot)
+
+        db.commit()
+
+    if drone_type:
+        dronespots_query = dronespots_query.filter(DronespotModel.drone_type == drone_type)
+
+    if not lat and not lon and not area and not keyword and not drone_type:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one of lat/lon/area, keyword, or drone_type must be provided."
+        )
+
+    dronespots_query = dronespots_query.order_by(DronespotModel.name).offset((page_num - 1) * size).limit(size)
 
     dronespots = dronespots_query.all()
+
+    if not dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No dronespots found"
+        )
 
     user_uid = user_data.get("sub") if user_data else None
 
@@ -564,32 +544,31 @@ async def get_dronespot_by_area(
         {
             "id": dronespot.id,
             "name": dronespot.name,
-            "is_like": (
-                db.query(UserDronespotLikeModel)
-                .filter(
-                    UserDronespotLikeModel.user_uid == user_uid,
-                    UserDronespotLikeModel.drone_spot_id == dronespot.id
-                )
-                .count() if user_uid else 0
-            ),
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
+            ).first() else 0,
             "location": {
                 "lat": dronespot.lat,
                 "lon": dronespot.lon,
-                "address": dronespot.address,
+                "address": dronespot.address
             },
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
-                UserDronespotLikeModel.drone_spot_id == dronespot.id).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id).scalar(),
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
+            ).scalar(),
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
+            ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
+            "drone_type": dronespot.drone_type,
             "area": [
                 {"id": 1, "name": "Area 1"},
                 {"id": 2, "name": "Area 2"}
             ],
             "permit": {
                 "flight": dronespot.permit_flight,
-                "camera": dronespot.permit_camera,
+                "camera": dronespot.permit_camera
             }
         }
         for dronespot in dronespots
@@ -634,8 +613,8 @@ async def recommend_dronespots(
             },
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
                 UserDronespotLikeModel.drone_spot_id == dronespot.id).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id).scalar(),
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
             "area": [
@@ -651,6 +630,7 @@ async def recommend_dronespots(
     ]
 
     return response_data
+
 @router.get("/dronespot/{dronespot_id}", response_model=DronespotResponse)
 async def get_dronespot(
         dronespot_id: int,
@@ -699,27 +679,39 @@ async def get_dronespot(
             ).first() else 0
         })
 
-    courses = [
-        {
-            "id": 1,
-            "name": "Sample Course",
-            "content": "This is a great course.",
-            "places": [
-                {
-                    "id": 1,
-                    "name": "Sample Place 1",
-                    "photo": "/media/sample_place_photo_1.jpg"
-                },
-                {
-                    "id": 2,
-                    "name": "Sample Place 2",
-                    "photo": "/media/sample_place_photo_2.jpg"
-                }
-            ],
-            "distance": 5000,
-            "duration": 60
-        }
-    ]
+    course_visits = db.query(CourseVisitModel).filter(CourseVisitModel.dronespot_id == dronespot_id).all()
+    courses = []
+    for visit in course_visits:
+        course = db.query(CourseModel).filter(CourseModel.id == visit.course_id).first()
+        if course:
+            place_info = []
+
+            if visit.place_id:
+                place = db.query(PlaceModel).filter(PlaceModel.id == visit.place_id).first()
+                if place:
+                    place_info.append({
+                        "id": place.id,
+                        "name": place.name,
+                        "photo": place.photo_url
+                    })
+
+            if visit.dronespot_id:
+                dronespot_place = db.query(DronespotModel).filter(DronespotModel.id == visit.dronespot_id).first()
+                if dronespot_place:
+                    place_info.append({
+                        "id": dronespot_place.id,
+                        "name": dronespot_place.name,
+                        "photo": dronespot_place.photo_url
+                    })
+
+            courses.append({
+                "id": course.id,
+                "name": course.name,
+                "content": course.content,
+                "places": place_info,
+                "distance": course.distance,
+                "duration": course.duration
+            })
 
     accommodations = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 32).order_by(func.random()).limit(
