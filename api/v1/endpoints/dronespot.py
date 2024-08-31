@@ -10,7 +10,7 @@ from starlette.staticfiles import StaticFiles
 
 from models import UserDronespotLike as UserDronespotLikeModel, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
     Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
-    Review
+    CourseVisit as CourseVisitModel
 from schemas import Dronespot, Permit, Area, Location, DronespotResponse
 from core.auth import verify_user_token
 from database.mariadb_session import get_db
@@ -159,8 +159,8 @@ async def update_dronespot(
 
     likes_count = db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
         UserDronespotLikeModel.drone_spot_id == dronespot_id).scalar()
-    reviews_count = db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot_id).scalar()
+    reviews_count = db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot_id).scalar()
 
     return Dronespot(
         id=db_dronespot.id,
@@ -385,8 +385,8 @@ async def get_popular_dronespots(
                 "address": dronespot.address
             },
             "likes_count": likes_count,
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
             ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
@@ -443,8 +443,8 @@ async def get_popular_dronespots_by_keyword(
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
                 UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
             ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
@@ -556,8 +556,8 @@ async def search_dronespots(
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
                 UserDronespotLikeModel.drone_spot_id == dronespot.id
             ).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
             ).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
@@ -613,8 +613,8 @@ async def recommend_dronespots(
             },
             "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
                 UserDronespotLikeModel.drone_spot_id == dronespot.id).scalar(),
-            "reviews_count": db.query(func.count(Review.id)).filter(
-                Review.dronespot_id == dronespot.id).scalar(),
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id).scalar(),
             "photo": dronespot.photo_url,
             "comment": dronespot.comment,
             "area": [
@@ -630,6 +630,7 @@ async def recommend_dronespots(
     ]
 
     return response_data
+
 @router.get("/dronespot/{dronespot_id}", response_model=DronespotResponse)
 async def get_dronespot(
         dronespot_id: int,
@@ -678,27 +679,39 @@ async def get_dronespot(
             ).first() else 0
         })
 
-    courses = [
-        {
-            "id": 1,
-            "name": "Sample Course",
-            "content": "This is a great course.",
-            "places": [
-                {
-                    "id": 1,
-                    "name": "Sample Place 1",
-                    "photo": "/media/sample_place_photo_1.jpg"
-                },
-                {
-                    "id": 2,
-                    "name": "Sample Place 2",
-                    "photo": "/media/sample_place_photo_2.jpg"
-                }
-            ],
-            "distance": 5000,
-            "duration": 60
-        }
-    ]
+    course_visits = db.query(CourseVisitModel).filter(CourseVisitModel.dronespot_id == dronespot_id).all()
+    courses = []
+    for visit in course_visits:
+        course = db.query(CourseModel).filter(CourseModel.id == visit.course_id).first()
+        if course:
+            place_info = []
+
+            if visit.place_id:
+                place = db.query(PlaceModel).filter(PlaceModel.id == visit.place_id).first()
+                if place:
+                    place_info.append({
+                        "id": place.id,
+                        "name": place.name,
+                        "photo": place.photo_url
+                    })
+
+            if visit.dronespot_id:
+                dronespot_place = db.query(DronespotModel).filter(DronespotModel.id == visit.dronespot_id).first()
+                if dronespot_place:
+                    place_info.append({
+                        "id": dronespot_place.id,
+                        "name": dronespot_place.name,
+                        "photo": dronespot_place.photo_url
+                    })
+
+            courses.append({
+                "id": course.id,
+                "name": course.name,
+                "content": course.content,
+                "places": place_info,
+                "distance": course.distance,
+                "duration": course.duration
+            })
 
     accommodations = db.query(PlaceModel).join(DronePlaceModel, DronePlaceModel.place_id == PlaceModel.id).filter(
         DronePlaceModel.dronespot_id == dronespot_id, PlaceModel.place_type_id == 32).order_by(func.random()).limit(
