@@ -42,14 +42,14 @@ class User(Base):
     one_liner = Column(String(100), nullable=True)
     password = Column(TEXT, nullable=False)
 
-    user_term_agree = relationship('UserTermAgree', back_populates='user')
-    followers = relationship('Follow', foreign_keys='Follow.follower_uid', back_populates='follower')
-    followings = relationship('Follow', foreign_keys='Follow.following_uid', back_populates='following')
-    user_dronespot_likes = relationship('UserDronespotLike', back_populates='user')
-    reviews = relationship('Review', back_populates='user')
-    user_review_likes = relationship('UserReviewLike', back_populates='user')
-    refresh_tokens = relationship("Refresh", back_populates='user')
-    review_report = relationship("ReviewReport", back_populates='user')
+    user_term_agree = relationship('UserTermAgree', back_populates='user', cascade="all, delete-orphan")
+    followers = relationship('Follow', foreign_keys='Follow.follower_uid', back_populates='follower', cascade="all, delete-orphan")
+    followings = relationship('Follow', foreign_keys='Follow.following_uid', back_populates='following', cascade="all, delete-orphan")
+    user_dronespot_likes = relationship('UserDronespotLike', back_populates='user', cascade="all, delete-orphan")
+    reviews = relationship('Review', back_populates='user', cascade="all, delete-orphan")
+    user_review_likes = relationship('UserReviewLike', back_populates='user', cascade="all, delete-orphan")
+    refresh_tokens = relationship("Refresh", back_populates='user', cascade="all, delete-orphan")
+    review_report = relationship("ReviewReport", back_populates='user', cascade="all, delete-orphan")
 
 
 class Refresh(Base):
@@ -91,6 +91,7 @@ class Dronespot(Base):
     comment = Column(String(200), nullable=False)
     permit_flight = Column(TINYINT(1), nullable=False)
     permit_camera = Column(TINYINT(1), nullable=False)
+    drone_type = Column(TINYINT(1), nullable=False)
 
     user_dronespot_likes = relationship('UserDronespotLike', back_populates='dronespot')
     reviews = relationship('Review', back_populates='dronespot')
