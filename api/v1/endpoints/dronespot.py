@@ -668,6 +668,7 @@ async def get_dronespot(
             "place_name": review.dronespot.name,
             "permit": {"flight": review.permit_flight, "camera": review.permit_camera},
             "drone_type": review.drone_type,
+            "drone": review.drone,
             "date": review.flight_date.isoformat(),
             "comment": review.comment,
             "photo": review.photo_url,
