@@ -239,6 +239,10 @@ class Course(CourseBase):
     id: int
     class Config:
         from_attributes = True
+class CourseDronespot(Course):
+    photo_url: str
+    class Config:
+        from_attributes = True
 
 class CourseWithPlaces(Course):
     places: List[Union[Place, Dronespot]] = []
@@ -274,6 +278,6 @@ class DronespotResponse(BaseModel):
     area: List[Area]
     permit: Permit
     reviews: List[ReviewDronespot]
-    courses: List[Course]
+    courses: List[CourseDronespot]
     places: Places
 

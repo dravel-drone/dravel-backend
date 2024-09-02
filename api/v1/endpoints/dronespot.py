@@ -680,36 +680,43 @@ async def get_dronespot(
             ).first() else 0
         })
 
-    course_visits = db.query(CourseVisitModel).filter(CourseVisitModel.dronespot_id == dronespot_id).all()
+    course_visits = db.query(CourseVisitModel).filter(
+        CourseVisitModel.dronespot_id == dronespot_id
+    ).group_by(
+        CourseVisitModel.course_id,
+        CourseVisitModel.dronespot_id
+    ).limit(3).all()
+
     courses = []
     for visit in course_visits:
         course = db.query(CourseModel).filter(CourseModel.id == visit.course_id).first()
         if course:
-            place_info = []
-
-            if visit.place_id:
-                place = db.query(PlaceModel).filter(PlaceModel.id == visit.place_id).first()
-                if place:
-                    place_info.append({
-                        "id": place.id,
-                        "name": place.name,
-                        "photo": place.photo_url
-                    })
-
-            if visit.dronespot_id:
-                dronespot_place = db.query(DronespotModel).filter(DronespotModel.id == visit.dronespot_id).first()
-                if dronespot_place:
-                    place_info.append({
-                        "id": dronespot_place.id,
-                        "name": dronespot_place.name,
-                        "photo": dronespot_place.photo_url
-                    })
+            # place_info = []
+            #
+            # if visit.place_id:
+            #     place = db.query(PlaceModel).filter(PlaceModel.id == visit.place_id).first()
+            #     if place:
+            #         place_info.append({
+            #             "id": place.id,
+            #             "name": place.name,
+            #             "photo": place.photo_url
+            #         })
+            #
+            # if visit.dronespot_id:
+            #     dronespot_place = db.query(DronespotModel).filter(DronespotModel.id == visit.dronespot_id).first()
+            #     if dronespot_place:
+            #         place_info.append({
+            #             "id": dronespot_place.id,
+            #             "name": dronespot_place.name,
+            #             "photo": dronespot_place.photo_url
+            #         })
 
             courses.append({
                 "id": course.id,
                 "name": course.name,
                 "content": course.content,
-                "places": place_info,
+                # "places": place_info,
+                "photo_url": dronespot.photo_url,
                 "distance": course.distance,
                 "duration": course.duration
             })
