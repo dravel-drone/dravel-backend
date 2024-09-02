@@ -125,6 +125,7 @@ class Review(Base):
     writer_uid = Column(String(128), ForeignKey('user.uid'), nullable=False)
     dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=False)
     drone_type = Column(String(45), nullable=False)
+    drone = Column(String(45), nullable=False)
     permit_flight = Column(TINYINT(1), nullable=False)
     permit_camera = Column(TINYINT(1), nullable=False)
     drone = Column(String(45), nullable=False)

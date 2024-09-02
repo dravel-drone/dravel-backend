@@ -182,6 +182,12 @@ class Review(BaseModel):
     class Config:
         from_attributes = True
 
+class ReviewDronespot(Review):
+    drone: str
+
+    class Config:
+        from_attributes = True
+
 
 # UserReviewLike pydantic 스키마
 class UserReviewLikeBase(BaseModel):
@@ -267,7 +273,7 @@ class DronespotResponse(BaseModel):
     location: Location
     area: List[Area]
     permit: Permit
-    reviews: List[Review]
+    reviews: List[ReviewDronespot]
     courses: List[Course]
     places: Places
 
