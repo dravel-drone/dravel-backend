@@ -175,7 +175,7 @@ class Review(BaseModel):
     drone_type: str
     date: str
     comment: str
-    photo: str
+    photo: Optional[str]
     like_count: int
     is_like: int
 
