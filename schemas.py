@@ -240,7 +240,7 @@ class Course(CourseBase):
     class Config:
         from_attributes = True
 class CourseDronespot(Course):
-    photo_url: str
+    photo_url: Optional[str]
     class Config:
         from_attributes = True
 

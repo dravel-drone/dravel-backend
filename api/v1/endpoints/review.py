@@ -31,6 +31,8 @@ async def create_review(
         drone_type: str = Form(...),
         date: str = Form(...),
         drone: str = Form(...),
+        permit_flight: int = Form(...),
+        permit_camera: int = Form(...),
         file: UploadFile = File(...),
         db: Session = Depends(get_db),
         user: Dict[str, Any] = Depends(verify_user_token)
@@ -48,8 +50,8 @@ async def create_review(
         writer_uid=user_db.uid,
         dronespot_id=drone_spot_id,
         drone_type=drone_type,
-        permit_flight=drone_spot.permit_flight,
-        permit_camera=drone_spot.permit_camera,
+        permit_flight=permit_flight,
+        permit_camera=permit_camera,
         drone=drone,
         flight_date=date,
         comment=comment
