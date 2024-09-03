@@ -91,7 +91,7 @@ async def create_review(
         "date": str(db_review.flight_date),
         "comment": db_review.comment,
         "photo": db_review.photo_url,
-        "like_count": like_count,
+        "like_count": 0,
         "is_like": is_like
     }
 
