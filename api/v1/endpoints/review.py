@@ -24,7 +24,7 @@ from schemas import Review
 router = APIRouter()
 
 
-@router.post("/review/{drone_spot_id}", response_model=Review, status_code=200)
+@router.post("/review/{drone_spot_id}", response_model=ReviewDronespot, status_code=200)
 async def create_review(
         drone_spot_id: int,
         comment: str = Form(...),
@@ -87,6 +87,7 @@ async def create_review(
             "camera": db_review.permit_camera
         },
         "drone_type": db_review.drone_type,
+        "drone": db_review.drone,
         "date": str(db_review.flight_date),
         "comment": db_review.comment,
         "photo": db_review.photo_url,
