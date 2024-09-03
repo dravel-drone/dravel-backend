@@ -19,7 +19,7 @@ from models import (
 from core.config import settings
 import os
 
-from schemas import Review
+from schemas import Review, ReviewDronespot
 
 router = APIRouter()
 
