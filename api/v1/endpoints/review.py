@@ -33,7 +33,7 @@ async def create_review(
         drone: str = Form(...),
         permit_flight: int = Form(...),
         permit_camera: int = Form(...),
-        file: UploadFile = File(...),
+        file: Optional[UploadFile] = File(None),
         db: Session = Depends(get_db),
         user: Dict[str, Any] = Depends(verify_user_token)
 ):
