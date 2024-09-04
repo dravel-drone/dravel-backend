@@ -576,6 +576,58 @@ async def search_dronespots(
 
     return response_data
 
+@router.get("/dronespot/all", response_model=List[Dronespot])
+async def get_all_dronespot(
+    db: Session = Depends(get_db),
+    user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    dronespots = db.query(DronespotModel).all()
+
+    if not dronespots:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No dronespots found"
+        )
+
+    user_uid = user_data.get("sub") if user_data else None
+
+    response_data = [
+        {
+            "id": dronespot.id,
+            "name": dronespot.name,
+            "is_like": 1 if user_uid and db.query(UserDronespotLikeModel).filter(
+                UserDronespotLikeModel.user_uid == user_uid,
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
+            ).first() else 0,
+            "location": {
+                "lat": dronespot.lat,
+                "lon": dronespot.lon,
+                "address": dronespot.address
+            },
+            "likes_count": db.query(func.count(UserDronespotLikeModel.user_uid)).filter(
+                UserDronespotLikeModel.drone_spot_id == dronespot.id
+            ).scalar(),
+            "reviews_count": db.query(func.count(ReviewModel.id)).filter(
+                ReviewModel.dronespot_id == dronespot.id
+            ).scalar(),
+            "photo": dronespot.photo_url,
+            "comment": dronespot.comment,
+            "drone_type": dronespot.drone_type,
+            "area": [
+                {"id": 1, "name": "Area 1"},
+                {"id": 2, "name": "Area 2"}
+            ],
+            "permit": {
+                "flight": dronespot.permit_flight,
+                "camera": dronespot.permit_camera
+            }
+        }
+        for dronespot in dronespots
+    ]
+
+    return response_data
+
+
 @router.get("/dronespot/recommend", response_model=List[Dronespot])
 async def recommend_dronespots(
     page_num: int = Query(1, ge=1),
