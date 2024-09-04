@@ -31,7 +31,8 @@ from schemas import (
     Place as PlaceSchema,
     CourseWithPlaces,
     Location,
-    Permit
+    Permit,
+    CourseDronespot
 )
 
 router = APIRouter()
@@ -306,5 +307,34 @@ async def get_courses_include_dronespot(
         response_data.append(get_course_with_places(
             data.course_id, db, uid=user_uid
         ))
+
+    return response_data
+
+@router.get('/trend/course', status_code=status.HTTP_200_OK, response_model=CourseDronespot)
+async def get_trend_course(
+        db: Session = Depends(get_db)
+):
+    random_course = db.query(Course).order_by(func.random()).first()
+    if random_course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='코스 데이터가 존재하지 않습니다.'
+        )
+
+    visit_data = random_course.course_visits
+    photo_url = None
+    for v in visit_data:
+        if v.dronespot_id is not None:
+            photo_url = v.dronespot.photo_url
+            break
+
+    response_data = {
+        'id': random_course.id,
+        'name': random_course.name,
+        'content': random_course.content,
+        'distance': random_course.distance,
+        'duration': random_course.duration,
+        'photo_url': photo_url
+    }
 
     return response_data

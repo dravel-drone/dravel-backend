@@ -657,7 +657,8 @@ async def get_dronespot(
         .count() if user_data and user_data.get("sub") else 0
     )
 
-    reviews = db.query(ReviewModel).filter(ReviewModel.dronespot_id == dronespot_id).all()
+    reviews = db.query(ReviewModel).filter(ReviewModel.dronespot_id == dronespot_id).order_by(
+        ReviewModel.flight_date.desc()).all()
 
     review_data = []
     for review in reviews:
