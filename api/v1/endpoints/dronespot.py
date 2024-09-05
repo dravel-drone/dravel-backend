@@ -578,10 +578,16 @@ async def search_dronespots(
 
 @router.get("/dronespot/all", response_model=List[Dronespot])
 async def get_all_dronespot(
+    drone_type: Optional[int] = None,
     db: Session = Depends(get_db),
     user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
 ):
-    dronespots = db.query(DronespotModel).all()
+    dronespots = db.query(DronespotModel)
+
+    if drone_type is not None:
+        dronespots = dronespots.filter(DronespotModel.drone_type == drone_type).all()
+    else:
+        dronespots = dronespots.all()
 
     if not dronespots:
         raise HTTPException(
