@@ -1,3 +1,4 @@
+import asyncio
 import os
 import uuid
 from math import radians
@@ -8,6 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
+from core.getplace import save_place
 from models import UserDronespotLike as UserDronespotLikeModel, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
     Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
     Review
@@ -74,6 +76,10 @@ async def create_dronespot(
         {"id": 1, "name": "Area 1"},
         {"id": 2, "name": "Area 2"}
     ]
+
+    # 주변장소 디비에 저장
+    dronespotID = db_dronespot.id
+    await save_place(dronespotID)
 
     return {
         "id": db_dronespot.id,
