@@ -105,6 +105,7 @@ class UserDronespotLike(Base):
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
     drone_spot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    created_at = Column(DATETIME, default=datetime.utcnow, nullable=False)
 
     user = relationship('User', back_populates='user_dronespot_likes')
     dronespot = relationship('Dronespot', back_populates='user_dronespot_likes')
@@ -155,6 +156,7 @@ class UserReviewLike(Base):
 
     user_uid = Column(String(128), ForeignKey('user.uid'), nullable=True)
     review_id = Column(INTEGER(unsigned=True), ForeignKey('review.id'), primary_key=True, nullable=False)
+    created_at = Column(DATETIME, default=datetime.utcnow, nullable=False)
 
     user = relationship('User', back_populates='user_review_likes')
     review = relationship('Review', back_populates='user_review_likes')
