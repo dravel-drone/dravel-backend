@@ -318,7 +318,8 @@ async def get_liked_dronespots(
         db.query(DronespotModel)
         .join(UserDronespotLikeModel, DronespotModel.id == UserDronespotLikeModel.drone_spot_id)
         .filter(UserDronespotLikeModel.user_uid == user_uid)
-        .all()
+        .order_by(UserDronespotLikeModel.created_at.desc())
+        .offset((page_num - 1) * size).limit(size).all()
     )
 
     if not liked_dronespots:
@@ -326,9 +327,6 @@ async def get_liked_dronespots(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No liked dronespots found"
         )
-
-    liked_dronespots = liked_dronespots.order_by(UserDronespotLikeModel.created_at.desc())
-    liked_dronespots = liked_dronespots.offset((page_num - 1) * size).limit(size).all()
 
     response_data = []
     for dronespot in liked_dronespots:

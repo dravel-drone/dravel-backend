@@ -260,7 +260,8 @@ def get_user_reviews(
         db.query(ReviewModel)
         .join(UserReviewLikeModel, ReviewModel.id == UserReviewLikeModel.review_id)
         .filter(UserReviewLikeModel.user_uid == user_id)
-        .all()
+        .order_by(UserReviewLikeModel.created_at.desc())
+        .offset((page_num - 1) * size).limit(size).all()
     )
 
     if not liked_review:
@@ -269,13 +270,8 @@ def get_user_reviews(
             detail="No liked review found"
         )
 
-    db_review = liked_review.order_by(UserReviewLikeModel.created_at.desc())
-
-    # 페이징
-    reviews = db_review.offset((page_num - 1) * size).limit(size).all()
-
     response = []
-    for review in reviews:
+    for review in liked_review:
         # 로그인한 유저일 경우, 좋아요 여부 확인
         if user:
             is_like = db.query(UserReviewLikeModel).filter(
