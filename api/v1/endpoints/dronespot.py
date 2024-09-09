@@ -296,6 +296,8 @@ async def unlike_dronespot(
 @router.get("/dronespot/like/{user_uid}", response_model=List[Dronespot])
 async def get_liked_dronespots(
         user_uid: str,
+        page_num: int = Query(1, alias="page_num"),
+        size: int = Query(10, alias="size"),
         db: Session = Depends(get_db),
         user_data: Optional[Dict[str, Any]] = Depends(verify_user_token)
 ):
@@ -318,6 +320,9 @@ async def get_liked_dronespots(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No liked dronespots found"
         )
+
+    liked_dronespots = liked_dronespots.order_by(UserDronespotLikeModel.created_at.desc())
+    liked_dronespots = liked_dronespots.offset((page_num - 1) * size).limit(size).all()
 
     response_data = []
     for dronespot in liked_dronespots:
