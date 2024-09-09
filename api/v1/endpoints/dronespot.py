@@ -31,6 +31,7 @@ async def create_dronespot(
         comment: str = Form(...),
         permit_flight: int = Form(...),
         permit_camera: int = Form(...),
+        drone_type: int = Form(...),
         file: Optional[UploadFile] = File(None),
         db: Session = Depends(get_db),
         user_data: Dict[str, Any] = Depends(verify_user_token)
@@ -49,7 +50,8 @@ async def create_dronespot(
         address=address,
         comment=comment,
         permit_flight=permit_flight,
-        permit_camera=permit_camera
+        permit_camera=permit_camera,
+        drone_type=drone_type
     )
 
     db.add(db_dronespot)
@@ -98,7 +100,8 @@ async def create_dronespot(
         "permit": {
             "flight": db_dronespot.permit_flight,
             "camera": db_dronespot.permit_camera
-        }
+        },
+        "drone_type": drone_type
     }
 
 @router.patch("/dronespot/{dronespot_id}", response_model=Dronespot)
@@ -111,6 +114,7 @@ async def update_dronespot(
         comment: Optional[str] = Form(None),
         permit_flight: Optional[int] = Form(None),
         permit_camera: Optional[int] = Form(None),
+        drone_type: int = Form(...),
         file: Optional[UploadFile] = File(None),
         db: Session = Depends(get_db),
         user_data: Dict[str, Any] = Depends(verify_user_token)
@@ -137,6 +141,7 @@ async def update_dronespot(
         "comment": comment,
         "permit_flight": permit_flight,
         "permit_camera": permit_camera,
+        "drone_type": drone_type
     }
 
     for key, value in update_data.items():
@@ -185,7 +190,8 @@ async def update_dronespot(
         permit=Permit(
             flight=db_dronespot.permit_flight,
             camera=db_dronespot.permit_camera
-        )
+        ),
+        drone_type=drone_type
     )
 
 
