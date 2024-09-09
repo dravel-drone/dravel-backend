@@ -14,7 +14,7 @@ from models import (
     Dronespot as DronespotModel,
     User as UserModel,
     UserReviewLike as UserReviewLikeModel,
-    ReviewReport as ReviewReportModel
+    ReviewReport as ReviewReportModel,
 )
 from core.config import settings
 import os
@@ -241,6 +241,71 @@ async def unlike_review(
     db.commit()
 
     return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
+
+@router.get("/review/like/{user_id}", response_model=list[Review], status_code=200)
+def get_user_reviews(
+    user_id: str,
+    page_num: int = Query(1, alias="page_num"),
+    size: int = Query(10, alias="size"),
+    db: Session = Depends(get_db),
+    user: Optional[Dict[str, Any]] = Depends(verify_user_token)
+):
+    if not user or user.get("sub") != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
+        )
+
+    liked_review = (
+        db.query(ReviewModel)
+        .join(UserReviewLikeModel, ReviewModel.id == UserReviewLikeModel.review_id)
+        .filter(UserReviewLikeModel.user_uid == user_id)
+        .all()
+    )
+
+    if not liked_review:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No liked review found"
+        )
+
+    db_review = liked_review.order_by(UserReviewLikeModel.created_at.desc())
+
+    # 페이징
+    reviews = db_review.offset((page_num - 1) * size).limit(size).all()
+
+    response = []
+    for review in reviews:
+        # 로그인한 유저일 경우, 좋아요 여부 확인
+        if user:
+            is_like = db.query(UserReviewLikeModel).filter(
+                UserReviewLikeModel.review_id == review.id,
+                UserReviewLikeModel.user_uid == user['sub']
+            ).count()
+        else:
+            is_like = 0  # 로그인하지 않은 경우
+
+        like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
+        response.append(Review(
+            id=review.id,
+            writer={
+                "uid": review.writer_uid,
+                "name": review.user.name
+            },
+            place_name=review.dronespot.name,
+            permit={
+                "flight": review.permit_flight,
+                "camera": review.permit_camera
+            },
+            drone_type=review.drone_type,
+            date=review.flight_date.isoformat(),
+            comment=review.comment if review.comment else "",
+            photo=review.photo_url if review.photo_url else "",
+            like_count=like_count,
+            is_like=is_like
+        ))
+
+    return response
 
 @router.get("/userReview/{user_id}", response_model=list[Review], status_code=200)
 def get_user_reviews(
