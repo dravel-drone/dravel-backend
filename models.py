@@ -129,7 +129,6 @@ class Review(Base):
     drone = Column(String(45), nullable=False)
     permit_flight = Column(TINYINT(1), nullable=False)
     permit_camera = Column(TINYINT(1), nullable=False)
-    drone = Column(String(45), nullable=False)
     flight_date = Column(DateTime, nullable=False)
     comment = Column(Text, nullable=True)
     photo_url = Column(Text, nullable=True)
