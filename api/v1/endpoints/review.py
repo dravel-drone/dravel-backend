@@ -242,7 +242,7 @@ async def unlike_review(
 
     return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
 
-@router.get("/review/like/{user_id}", response_model=list[Review], status_code=200)
+@router.get("/review/like/{user_id}", response_model=list[ReviewDronespot], status_code=200)
 def get_user_reviews(
     user_id: str,
     page_num: int = Query(1, alias="page_num"),
@@ -282,7 +282,7 @@ def get_user_reviews(
             is_like = 0  # 로그인하지 않은 경우
 
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
-        response.append(Review(
+        response.append(ReviewDronespot(
             id=review.id,
             writer={
                 "uid": review.writer_uid,
@@ -294,6 +294,7 @@ def get_user_reviews(
                 "camera": review.permit_camera
             },
             drone_type=review.drone_type,
+            drone=review.drone,
             date=review.flight_date.isoformat(),
             comment=review.comment if review.comment else "",
             photo=review.photo_url if review.photo_url else "",
