@@ -81,7 +81,7 @@ class Profile(BaseModel):
     post_count: int
     follower_count: int
     following_count: int
-    one_liner: str
+    one_liner: Optional[str]
     drone: Optional[str]
     is_following: Optional[int]
 

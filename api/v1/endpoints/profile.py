@@ -33,7 +33,7 @@ async def get_user_profile(
     # 로그인 한 유저일 경우, 팔로우 여부 확인
     if user:
         if user['sub']==db_user.uid:
-            is_following = null
+            is_following = None
         else:
             is_following = db.query(FollowModel).filter(
                 FollowModel.follower_uid == user['sub'],
