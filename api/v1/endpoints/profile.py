@@ -1,7 +1,8 @@
 import os
 import uuid
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form, status
+
 from sqlalchemy import null
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
@@ -64,16 +65,19 @@ async def get_user_profile(
 @router.patch("/profile/{uid}", response_model=Profile, status_code=200)
 async def patch_user_profile(
     uid: str,
-    name: str = Form(...),
-    one_liner: str = Form(...),
-    drone: str = Form(...),
-    file: UploadFile = File(...),
+    name: str = Form(None),
+    one_liner: str = Form(None),
+    drone: str = Form(None),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     user: Optional[Dict[str, Any]] = Depends(verify_user_token)
 ):
 
     if user["sub"] != uid:
-        raise HTTPException(status_code=400, detail="본인이 아닙니다.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="본인이 아닙니다.")
+
+    if name is None and one_liner is None and drone is None and file is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="적어도 하나 이상의 필드가 존재해야 합니다.")
 
     db_user = db.query(UserModel).filter(UserModel.uid == uid).first()
 
@@ -86,9 +90,12 @@ async def patch_user_profile(
         image_url = f"/media/{new_filename}"
         db_user.image = image_url
 
-    db_user.name = name
-    db_user.one_liner = one_liner
-    db_user.drone = drone
+    if name:
+        db_user.name = name
+    if one_liner:
+        db_user.one_liner = one_liner
+    if drone:
+        db_user.drone = drone
 
     db.commit()
     db.refresh(db_user)
