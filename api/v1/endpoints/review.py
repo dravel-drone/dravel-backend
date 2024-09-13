@@ -304,7 +304,7 @@ def get_user_reviews(
 
     return response
 
-@router.get("/userReview/{user_id}", response_model=list[Review], status_code=200)
+@router.get("/userReview/{user_id}", response_model=list[ReviewDronespot], status_code=200)
 def get_user_reviews(
     user_id: str,
     page_num: int = Query(1, alias="page_num"),
@@ -354,7 +354,8 @@ def get_user_reviews(
             comment=review.comment if review.comment else "",
             photo=review.photo_url if review.photo_url else "",
             like_count=like_count,
-            is_like=is_like
+            is_like=is_like,
+            drone=review.drone
         ))
 
     return response
