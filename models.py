@@ -33,7 +33,7 @@ class User(Base):
 
     uid = Column(String(128), primary_key=True, default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
     name = Column(String(45), nullable=False)
-    id = Column(String(20), nullable=False)
+    id = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     is_admin = Column(TINYINT(1), default=0, nullable=False)
     age = Column(INTEGER(unsigned=True), nullable=True)
