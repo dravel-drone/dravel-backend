@@ -100,11 +100,11 @@ async def create_review(
 @router.patch("/review/{review_id}", response_model=Review, status_code=200)
 async def patch_review(
         review_id: int,
-        comment: str = Form(...),
-        drone_type: str = Form(...),
-        date: str = Form(...),
-        drone: str = Form(...),
-        file: UploadFile = File(...),
+        comment: Optional[str] = Form(None),
+        drone_type: Optional[str] = Form(None),
+        date: Optional[str] = Form(None),
+        drone: Optional[str] = Form(None),
+        file: Optional[UploadFile] = File(None),
         db: Session = Depends(get_db),
         user: Dict[str, Any] = Depends(verify_user_token)
 ):
