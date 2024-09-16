@@ -169,7 +169,7 @@ class Writer(BaseModel):
 
 class Review(BaseModel):
     id: int
-    writer: Writer
+    writer: Optional[Writer]
     place_name: str
     permit: Permit
     drone_type: str

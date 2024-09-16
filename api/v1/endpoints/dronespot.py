@@ -797,7 +797,7 @@ async def get_dronespot(
         writer = db.query(UserModel).filter(UserModel.uid == review.writer_uid).first()
         review_data.append({
             "id": review.id,
-            "writer": {"uid": writer.uid, "name": writer.name},
+            "writer": None if writer is None else {"uid": writer.uid, "name": writer.name},
             "place_name": review.dronespot.name,
             "permit": {"flight": review.permit_flight, "camera": review.permit_camera},
             "drone_type": review.drone_type,
