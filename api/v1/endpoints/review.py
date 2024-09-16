@@ -243,7 +243,7 @@ async def unlike_review(
     return JSONResponse(content={"메시지": "해당 리뷰에 좋아요를 취소했습니다."}, status_code=200)
 
 @router.get("/review/like/{user_id}", response_model=list[ReviewDronespot], status_code=200)
-def get_user_reviews(
+def get_like_user_reviews(
     user_id: str,
     page_num: int = Query(1, alias="page_num"),
     size: int = Query(10, alias="size"),
@@ -397,7 +397,7 @@ def get_spot_reviews(
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
         response.append(Review(
             id=review.id,
-            writer={
+            writer=None if review.writer_uid is None else {
                 "uid": review.writer_uid,
                 "name": review.user.name
             },
@@ -441,7 +441,7 @@ def get_review(
     like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review_id).count()
     response.append(Review(
         id=review_id,
-        writer={
+        writer=None if db_review.writer_uid is None else {
             "uid": db_review.writer_uid,
             "name": db_review.user.name
         },
@@ -486,7 +486,7 @@ def get_trend_reviews(
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
         response.append(Review(
             id=review.id,
-            writer={
+            writer=None if review.writer_uid is None else {
                 "uid": review.writer_uid,
                 "name": review.user.name
             },
