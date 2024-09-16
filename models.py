@@ -46,7 +46,7 @@ class User(Base):
     followers = relationship('Follow', foreign_keys='Follow.follower_uid', back_populates='follower', cascade="all, delete-orphan")
     followings = relationship('Follow', foreign_keys='Follow.following_uid', back_populates='following', cascade="all, delete-orphan")
     user_dronespot_likes = relationship('UserDronespotLike', back_populates='user', cascade="all, delete-orphan")
-    reviews = relationship('Review', back_populates='user', cascade="all, delete-orphan")
+    reviews = relationship('Review', back_populates='user', passive_deletes=True)
     user_review_likes = relationship('UserReviewLike', back_populates='user', cascade="all, delete-orphan")
     refresh_tokens = relationship("Refresh", back_populates='user', cascade="all, delete-orphan")
     review_report = relationship("ReviewReport", back_populates='user', cascade="all, delete-orphan")
@@ -123,7 +123,7 @@ class Review(Base):
     __tablename__ = 'review'
 
     id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False, autoincrement=True)
-    writer_uid = Column(String(128), ForeignKey('user.uid'), nullable=False)
+    writer_uid = Column(String(128), ForeignKey('user.uid', ondelete="SET NULL"), nullable=True)
     dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), nullable=False)
     drone_type = Column(String(45), nullable=False)
     drone = Column(String(45), nullable=False)
