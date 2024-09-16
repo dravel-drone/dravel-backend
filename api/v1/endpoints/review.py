@@ -284,7 +284,7 @@ def get_like_user_reviews(
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
         response.append(ReviewDronespot(
             id=review.id,
-            writer={
+            writer=None if review.writer_uid is None else {
                 "uid": review.writer_uid,
                 "name": review.user.name
             },
@@ -340,7 +340,7 @@ def get_user_reviews(
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
         response.append(ReviewDronespot(
             id=review.id,
-            writer={
+            writer=None if review.writer_uid is None else {
                 "uid": review.writer_uid,
                 "name": review.user.name
             },
