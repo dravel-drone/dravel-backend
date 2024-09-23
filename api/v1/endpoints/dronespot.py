@@ -5,6 +5,7 @@ from math import radians
 import random
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
+from shapely import Point
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
@@ -888,6 +889,23 @@ async def get_dronespot(
         "place_type_id": place.place_type_id
     } for place in restaurants]
 
+    print(dronespot.lon)
+    point = Point(dronespot.lon, dronespot.lat)
+    region = settings.AREA_SHP_DATA[settings.AREA_SHP_DATA.geometry.contains(point)]
+    area = []
+
+    for c in range(region.shape[0]):
+        area.append({
+            'id': region.iloc[c, 3],
+            'name': region.iloc[c, 2]
+        })
+
+    if len(area) == 0:
+        area.append({
+            'id': 9,
+            'name': '해당없음'
+        })
+
     response_data = {
         "id": dronespot.id,
         "name": dronespot.name,
@@ -897,7 +915,7 @@ async def get_dronespot(
         "reviews_count": len(reviews),
         "photo_url": dronespot.photo_url,
         "comment": dronespot.comment,
-        "area": [{"id": 1, "name": "Area 1"}, {"id": 2, "name": "Area 2"}],
+        "area": area,
         "permit": {"flight": dronespot.permit_flight, "camera": dronespot.permit_camera},
         "reviews": review_data,
         "courses": courses,

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+import geopandas as gpd
 import os
 from dotenv import load_dotenv
 
@@ -31,6 +32,8 @@ class Settings(BaseSettings):
     PASSWORD_SALT: str = os.getenv('PASSWORD_SALT')
 
     TOURAPI_LDM_KEY: str = os.getenv('TOURAPI_LDM_KEY')
+
+    AREA_SHP_DATA: gpd.GeoDataFrame = gpd.read_file('./data/areas.shp')
 
     class Config:
         case_sensitive = True
