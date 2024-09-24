@@ -33,7 +33,8 @@ def is_whether_valid(db: Session, dronespot_id: int) -> Tuple[bool, Union[None, 
     if data is None:
         return False, None
 
-    now = datetime.now()
+    now = datetime.utcnow() + timedelta(hours=9)
+
     created_at = data.created_at
     time_difference = now - created_at
 
@@ -43,7 +44,7 @@ def is_whether_valid(db: Session, dronespot_id: int) -> Tuple[bool, Union[None, 
 
 
 def get_latest_time():
-    now = datetime.now()
+    now = datetime.utcnow() + timedelta(hours=9)
 
     times = [
         now.replace(hour=2, minute=15, second=0, microsecond=0),
