@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     PASSWORD_SALT: str = os.getenv('PASSWORD_SALT')
 
     TOURAPI_LDM_KEY: str = os.getenv('TOURAPI_LDM_KEY')
+    WHETHER_API_KEY: str = os.getenv('WHETHER_API_KEY')
 
     AREA_SHP_DATA: gpd.GeoDataFrame = gpd.read_file('./data/areas.shp')
 

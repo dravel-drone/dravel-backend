@@ -266,9 +266,15 @@ class Places(BaseModel):
     accommodations: List[Place]
     restaurants: List[Place]
 
+class Whether(BaseModel):
+    tmp: int
+    sky: int
+    pty: int
+
 class DronespotResponse(BaseModel):
     id: int
     name: str
+    whether: Optional[Whether] = None
     is_like: Optional[int] = 0
     likes_count: Optional[int] = 0
     reviews_count: Optional[int] = 0
