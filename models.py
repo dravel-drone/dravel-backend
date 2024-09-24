@@ -98,7 +98,19 @@ class Dronespot(Base):
     course_visits = relationship('CourseVisit', back_populates='dronespot')
     drone_places = relationship('DronePlace', back_populates='dronespot')
     trend_dronespots = relationship('TrendDronespot', back_populates='dronespot')
-    drone_places = relationship('DronePlace', back_populates='dronespot')
+    whether = relationship('Whether', back_populates='dronespot', cascade="all, delete-orphan")
+
+
+class Whether(Base):
+    __tablename__ = 'whether'
+
+    dronespot_id = Column(INTEGER(unsigned=True), ForeignKey('dronespot.id'), primary_key=True, nullable=False)
+    created_at = Column(DATETIME, nullable=False)
+    sky = Column(INTEGER(), nullable=False)
+    pty = Column(INTEGER(), nullable=False)
+    degree = Column(INTEGER(), nullable=False)
+
+    dronespot = relationship('Dronespot', back_populates='whether')
 
 class UserDronespotLike(Base):
     __tablename__ = 'user_dronespot_like'
