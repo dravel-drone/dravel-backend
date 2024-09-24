@@ -10,7 +10,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
 
+from core.coordinate import CoordinateConverter
 from core.getplace import save_place
+from core.getwhether import get_whether_data
 from models import UserDronespotLike as UserDronespotLikeModel, Dronespot as DronespotModel, User as UserModel, TrendDronespot, \
     Review as ReviewModel, Course as CourseModel, Place as PlaceModel, UserReviewLike, DronePlace as DronePlaceModel, \
     CourseVisit as CourseVisitModel
@@ -825,26 +827,6 @@ async def get_dronespot(
     for visit in course_visits:
         course = db.query(CourseModel).filter(CourseModel.id == visit.course_id).first()
         if course:
-            # place_info = []
-            #
-            # if visit.place_id:
-            #     place = db.query(PlaceModel).filter(PlaceModel.id == visit.place_id).first()
-            #     if place:
-            #         place_info.append({
-            #             "id": place.id,
-            #             "name": place.name,
-            #             "photo": place.photo_url
-            #         })
-            #
-            # if visit.dronespot_id:
-            #     dronespot_place = db.query(DronespotModel).filter(DronespotModel.id == visit.dronespot_id).first()
-            #     if dronespot_place:
-            #         place_info.append({
-            #             "id": dronespot_place.id,
-            #             "name": dronespot_place.name,
-            #             "photo": dronespot_place.photo_url
-            #         })
-
             courses.append({
                 "id": course.id,
                 "name": course.name,
@@ -889,7 +871,6 @@ async def get_dronespot(
         "place_type_id": place.place_type_id
     } for place in restaurants]
 
-    print(dronespot.lon)
     point = Point(dronespot.lon, dronespot.lat)
     region = settings.AREA_SHP_DATA[settings.AREA_SHP_DATA.geometry.contains(point)]
     area = []
@@ -906,9 +887,18 @@ async def get_dronespot(
             'name': '해당없음'
         })
 
+    converter = CoordinateConverter()
+    x, y = converter.convert(lon=float(dronespot.lon), lat=float(dronespot.lat), x=None, y=None, code=0)
+    whether = None
+    try:
+        whether = await get_whether_data(dronespot_id, x, y)
+    except Exception as e:
+        whether = None
+
     response_data = {
         "id": dronespot.id,
         "name": dronespot.name,
+        'whether': None if whether is None else whether,
         "is_like": is_like,
         "location": {"lat": dronespot.lat, "lon": dronespot.lon, "address": dronespot.address},
         "likes_count": likes_count,
