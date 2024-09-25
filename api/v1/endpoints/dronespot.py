@@ -849,7 +849,7 @@ async def get_dronespot(
         "id": place.id,
         "name": place.name,
         "comment": place.comment,
-        "photo": place.photo_url,
+        "photo_url": place.photo_url,
         "location": {
             "lat": place.lat,
             "lon": place.lon,
@@ -862,7 +862,7 @@ async def get_dronespot(
         "id": place.id,
         "name": place.name,
         "comment": place.comment,
-        "photo": place.photo_url,
+        "photo_url": place.photo_url,
         "location": {
             "lat": place.lat,
             "lon": place.lon,
