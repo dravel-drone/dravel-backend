@@ -361,7 +361,7 @@ def get_user_reviews(
     return response
 
 
-@router.get("/spotReview/{drone_spot_id}", response_model=list[Review], status_code=200)
+@router.get("/spotReview/{drone_spot_id}", response_model=list[ReviewDronespot], status_code=200)
 def get_spot_reviews(
     drone_spot_id: int,
     page_num: int = Query(1, alias="page_num"),
@@ -378,7 +378,7 @@ def get_spot_reviews(
         db_review = db_review.outerjoin(UserReviewLikeModel).group_by(ReviewModel.id).order_by(func.count(UserReviewLikeModel.review_id).desc())
     else:
         # 최신순 정렬
-        db_review = db_review.order_by(ReviewModel.flight_date.desc())
+        db_review = db_review.order_by(ReviewModel.id.desc())
 
     # 페이징
     reviews = db_review.offset((page_num - 1) * size).limit(size).all()
@@ -411,7 +411,8 @@ def get_spot_reviews(
             comment=review.comment if review.comment else "",
             photo=review.photo_url if review.photo_url else "",
             like_count=like_count,
-            is_like=is_like
+            is_like=is_like,
+            drone=review.drone
         ))
 
     return response
