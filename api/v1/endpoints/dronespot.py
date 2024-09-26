@@ -793,7 +793,7 @@ async def get_dronespot(
     )
 
     reviews = db.query(ReviewModel).filter(ReviewModel.dronespot_id == dronespot_id).order_by(
-        ReviewModel.id.desc()).all()
+        ReviewModel.id.desc()).limit(3).all()
 
     review_data = []
     for review in reviews:
