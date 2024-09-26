@@ -898,6 +898,7 @@ async def get_dronespot(
     response_data = {
         "id": dronespot.id,
         "name": dronespot.name,
+        "type": dronespot.drone_type,
         'whether': None if whether is None else whether,
         "is_like": is_like,
         "location": {"lat": dronespot.lat, "lon": dronespot.lon, "address": dronespot.address},

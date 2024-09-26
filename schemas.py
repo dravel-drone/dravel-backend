@@ -274,6 +274,7 @@ class Whether(BaseModel):
 class DronespotResponse(BaseModel):
     id: int
     name: str
+    type: int
     whether: Optional[Whether] = None
     is_like: Optional[int] = 0
     likes_count: Optional[int] = 0
