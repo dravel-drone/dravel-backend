@@ -395,7 +395,7 @@ def get_spot_reviews(
             is_like = 0  # 로그인하지 않은 경우
 
         like_count = db.query(UserReviewLikeModel).filter(UserReviewLikeModel.review_id == review.id).count()
-        response.append(Review(
+        response.append(ReviewDronespot(
             id=review.id,
             writer=None if review.writer_uid is None else {
                 "uid": review.writer_uid,
